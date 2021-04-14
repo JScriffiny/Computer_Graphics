@@ -18,7 +18,7 @@ class World {
     //Create the world state using provided window dimensions.
     World(int width, int height);
     void process_input(GLFWwindow* win, Camera camera1, Camera camera2,bool door_open);
-    void render_scene (std::map<std::string, Draw_Data> objects, bool plate_pressed);
+    void render_scene (std::map<std::string, Draw_Data> objects, bool plate_pressed,Shader *optional_shader = NULL);
     void check_collision(glm::vec3 previous_pos,bool door_open);
     
     //These are left public for convenience (but depending upon the complexity of your world state, it would 
@@ -31,7 +31,7 @@ class World {
     bool point_light_key_pressed = false;
     bool point_light_on = true;
     bool point_light_redLens = false;
-    glm::vec4 point_light_position = glm::vec4(0.0f, 10.0f, 0.0f, 1.0f); 
+    glm::vec4 point_light_position = glm::vec4(0.1f, 10.0f, 0.1f, 1.0f); //prevent divide by 0
     glm::vec3 point_light_color = glm::vec3(0.5f,0.5f,0.5f);
     
     //Directional Light

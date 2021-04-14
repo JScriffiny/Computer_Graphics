@@ -113,7 +113,7 @@ bool has_been_seen (std::vector<Shader*>* seen_vec, Shader* shader) {
   return seen;
 }
 
-void World::render_scene (std::map<std::string, Draw_Data> objects,bool plate_pressed) {
+void World::render_scene (std::map<std::string, Draw_Data> objects,bool plate_pressed,Shader *optional_shader) {
 
   glm::vec3 pos = this->camera->get_position();
   glm::mat4 wv = this->camera->get_view_matrix();
@@ -151,9 +151,23 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,bool plate_pr
     current_shader->setBool("dir_light.on",(this->dir_light_on || plate_pressed));
   }
 
+  if (optional_shader != NULL) {
+    //Create light's point of view
+    glm::mat4 lightProjection = glm::ortho(-10.0f,10.0f,-10.0f,10.0f,1.0f,20.0f);
+    glm::vec3 light_pos = glm::vec3(this->point_light_position);
+    glm::mat4 lightView = glm::lookAt(light_pos,glm::vec3(0.0f),glm::vec3(0.0f,1.0f,0.0f));
+    glm::mat4 lightSpaceMatrix = lightProjection * lightView; 
+    //Set depthShader's point of view
+    optional_shader->use();
+    optional_shader->setMat4("lightSpaceMatrix",lightSpaceMatrix);
+  }
+
   //Draw officeFloor
   Shape* officeFloor = objects["officeFloor"].shape;
   Shader* officeFloor_shader = objects["officeFloor"].shader;
+  if (optional_shader != NULL) {
+    officeFloor_shader = optional_shader;
+  }
   officeFloor_shader->use();
   glm::mat4 officeFloor_transform(1.0f);
   officeFloor_transform = glm::translate(officeFloor_transform,glm::vec3(0.0f,-3.99f,0.0f));

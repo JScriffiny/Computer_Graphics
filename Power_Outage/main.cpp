@@ -99,6 +99,7 @@ int main() {
   Shader outline_program("shaders/vertexShader.glsl","shaders/outlineFragmentShader.glsl");
   Shader font_program ("shaders/fontVertexShader.glsl","shaders/fontFragmentShader.glsl");
   Shader import_program("shaders/importVertexShader.glsl","shaders/importFragmentShader.glsl");
+  Shader depth_program("shaders/depthVertexShader.glsl","shaders/depthFragmentShader.glsl");
 
   //Map structure used to pass objects to render scene function
   //Draw_Data is a structure that has a shape and a shader
@@ -125,7 +126,7 @@ int main() {
   draw_map["cube2"].shader = &fill_program;
   
   //Initialize the shaders.
-  std::vector<Shader*> shaders = {&fill_program,&outline_program,&texture_program,&import_program};
+  std::vector<Shader*> shaders = {&fill_program,&outline_program,&texture_program,&import_program,&depth_program};
   glm::mat4 identity(1.0f);
   glm::mat4 model = identity;
   glm::mat4 view = identity;
@@ -179,6 +180,28 @@ int main() {
   glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_DISABLED);
   glfwSetCursorPosCallback(window,mouse_callback);
 
+  //Framebuffer object for depth map
+  unsigned int depthMapFBO;
+  glGenFramebuffers(1, &depthMapFBO);
+  const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024; //2048x2048 for better resolution
+  //Generate 2D texture to hold depth information
+  unsigned int depthMap;
+  glGenTextures(1, &depthMap);
+  glBindTexture(GL_TEXTURE_2D, depthMap);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT,
+               0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  //Bind and attach the texture
+  glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+  glDrawBuffer(GL_NONE);
+  glReadBuffer(GL_NONE);
+  //Reset to default
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  
   //glfwWindowShouldClose checks if GLFW has been instructed to close
   while(!glfwWindowShouldClose(window)) {
     float currentFrame = glfwGetTime();
@@ -189,6 +212,8 @@ int main() {
     glm::vec4 clr = world.clear_color;
     glClearColor(clr.r,clr.g,clr.b,clr.a);
 
+    glViewport(0,0,SHADOW_WIDTH,SHADOW_HEIGHT);
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
     //Clear the colorbuffer using the clear color
     //If you are doing depth testing, you must clear the GL_DEPTH_BUFFER too.
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
@@ -199,6 +224,14 @@ int main() {
     pressurePlate.process_input(window,world.camera->get_position());
 
     //2. Render Scene
+    world.render_scene(draw_map,pressurePlate.get_plate_status(),&depth_program);
+    door.draw(&import_program,door_texture);
+    pressurePlate.draw(&import_program,pressurePlate_texture);
+
+    glViewport(0,0,WIN_WIDTH,WIN_HEIGHT);
+    glBindFramebuffer(GL_FRAMEBUFFER,0);
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);//clear stencil too if needed
+
     world.render_scene(draw_map,pressurePlate.get_plate_status());
     door.draw(&import_program,door_texture);
     pressurePlate.draw(&import_program,pressurePlate_texture);
