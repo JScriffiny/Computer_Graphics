@@ -36,7 +36,9 @@ Camera camera(glm::vec3(10.0f,-3.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f),180.0f, 0.0f
 Camera camera_bird(glm::vec3(-0.5f,18.0f,1.0f),glm::vec3(0.0f,-1.0f,0.0f),-90.0f, -85.0f);
 
 //Capture the mouse position data on mouse movement
+void render_skybox(Shader * shader, Shape shape, unsigned int texture);
 void mouse_callback (GLFWwindow* win, double xpos, double ypos);
+glm::mat4 getLightPOV();
 
 //Create fonts
 Font arialFont("fonts/ArialBlackLarge.bmp","fonts/ArialBlack.csv",0.3,0.4);
@@ -92,6 +94,21 @@ int main() {
   Shape worldFloor;
   world.floor_texture = get_texture("images/bricks.jpg");
   set_texture_rectangle(&worldFloor,glm::vec3(-1.0,-1.0,0.0f),2.0f,2.0f,false,false,50.0f);
+
+  //Skybox shape
+  Shape skybox;
+  set_basic_cube(&skybox);
+
+  //Cube Map
+  std::vector<std::string> faces {
+    "skybox/right.jpg",
+    "skybox/left.jpg",
+    "skybox/top.jpg",
+    "skybox/bottom.jpg",
+    "skybox/front.jpg",
+    "skybox/back.jpg"
+  };
+  unsigned int cubemapTexture = get_cube_map(faces,false); 
   
   //Initialize the shader programs
   Shader fill_program("shaders/vertexShader.glsl","shaders/fragmentShader.glsl");
@@ -100,6 +117,7 @@ int main() {
   Shader font_program ("shaders/fontVertexShader.glsl","shaders/fontFragmentShader.glsl");
   Shader import_program("shaders/importVertexShader.glsl","shaders/importFragmentShader.glsl");
   Shader depth_program("shaders/depthVertexShader.glsl","shaders/depthFragmentShader.glsl");
+  Shader skybox_program("shaders/skyboxVertexShader.glsl","shaders/skyboxFragmentShader.glsl");
 
   //Map structure used to pass objects to render scene function
   //Draw_Data is a structure that has a shape and a shader
@@ -126,7 +144,8 @@ int main() {
   draw_map["cube2"].shader = &fill_program;
   
   //Initialize the shaders.
-  std::vector<Shader*> shaders = {&fill_program,&outline_program,&texture_program,&import_program,&depth_program};
+  std::vector<Shader*> shaders = {&fill_program,&outline_program,&texture_program,
+                                  &import_program,&depth_program,&skybox_program};
   glm::mat4 identity(1.0f);
   glm::mat4 model = identity;
   glm::mat4 view = identity;
@@ -214,8 +233,7 @@ int main() {
 
     glViewport(0,0,SHADOW_WIDTH,SHADOW_HEIGHT);
     glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-    //Clear the colorbuffer using the clear color
-    //If you are doing depth testing, you must clear the GL_DEPTH_BUFFER too.
+    //Clear appropriate buffers
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
     //1. Process Input
@@ -227,14 +245,19 @@ int main() {
     world.render_scene(draw_map,pressurePlate.get_plate_status(),&depth_program);
     door.draw(&import_program,door_texture);
     pressurePlate.draw(&import_program,pressurePlate_texture);
+    render_skybox(&skybox_program,skybox,cubemapTexture);
 
     glViewport(0,0,WIN_WIDTH,WIN_HEIGHT);
     glBindFramebuffer(GL_FRAMEBUFFER,0);
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);//clear stencil too if needed
 
+    //texture_program.use();
+    //texture_program.setMat4("lightSpaceMatrix",getLightPOV());
+
     world.render_scene(draw_map,pressurePlate.get_plate_status());
     door.draw(&import_program,door_texture);
     pressurePlate.draw(&import_program,pressurePlate_texture);
+    render_skybox(&skybox_program,skybox,cubemapTexture);
     
     /****Heads up display must be last so that the semi-transparency works***/
     char my_char[2] = "+";
@@ -250,6 +273,17 @@ int main() {
 
   glfwTerminate(); //clean/delete GLFW resources
   return 0;
+}
+
+void render_skybox(Shader * shader, Shape shape, unsigned int texture) {
+  shader->use();
+  glm::mat4 temp_view = glm::mat4(glm::mat3(camera.get_view_matrix())); 
+  shader->setMat4("view",temp_view);
+  glDepthFunc(GL_EQUAL);
+  glBindTexture(GL_TEXTURE_CUBE_MAP,texture);
+  glDrawArrays(GL_TRIANGLES, 0, 36);
+  shape.draw(shader->ID);
+  glDepthFunc(GL_LESS);
 }
 
 void mouse_callback(GLFWwindow* win, double xpos, double ypos) {
@@ -268,3 +302,10 @@ void mouse_callback(GLFWwindow* win, double xpos, double ypos) {
   camera.process_mouse_movement(offsetx,offsety);
 }
 
+glm::mat4 getLightPOV() {
+  glm::mat4 lightProjection = glm::ortho(-10.0f,10.0f,-10.0f,10.0f,1.0f,20.0f);
+  glm::vec3 light_pos = glm::vec3(world.point_light_position);
+  glm::mat4 lightView = glm::lookAt(light_pos,glm::vec3(0.0f),glm::vec3(0.0f,1.0f,0.0f));
+  glm::mat4 lightSpaceMatrix = lightProjection * lightView;
+  return lightSpaceMatrix;
+}

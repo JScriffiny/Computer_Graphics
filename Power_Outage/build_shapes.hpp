@@ -43,5 +43,7 @@ void set_basic_starfield (Shape* stars, int num_stars);
 //Creates a 1x1x1 cube
 void set_basic_cube (Shape* cube, bool flip_normal = false, bool outline=false);
 
+//Process skybox images
+unsigned int get_cube_map(std::vector<std::string> faces, bool cube_map_flag);
 
 #endif //BUILD_SHAPES_HPP

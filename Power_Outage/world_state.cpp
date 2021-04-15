@@ -89,6 +89,7 @@ void World::process_input (GLFWwindow *win, Camera camera1, Camera camera2, bool
 
   //Print player's current position
   if (glfwGetKey(win,GLFW_KEY_P)==GLFW_PRESS && print_flag) {
+    this->dir_light_on = !this->dir_light_on;
     //Print current position
     glm::vec3 pos = this->camera->get_position();
     std::cout << "My Position: (" + std::to_string(pos.x);
@@ -223,7 +224,8 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,bool plate_pr
   Shape* cube1 = objects["cube1"].shape;
   Shader* cube1_shader = objects["cube1"].shader;
   glm::mat4 cube1_transform(1.0f);
-  cube1_transform = glm::translate(cube1_transform,glm::vec3(-1.0f,-3.35f,1.0f));
+  //cube1_transform = glm::translate(cube1_transform,glm::vec3(-1.0f,-3.35f,1.0f));
+  cube1_transform = glm::translate(cube1_transform,glm::vec3(7.0f,-3.0f,0.0f));
   cube1_transform = glm::scale(cube1_transform,glm::vec3(0.25f,0.25f, 0.25f));
   cube1_shader->use();
   cube1_shader->setMat4("transform",glm::mat4(1.0f));
