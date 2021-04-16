@@ -38,6 +38,7 @@ class Camera {
   Camera(glm::vec3 position, glm::vec3 up, float yaw = YAW,float pitch=PITCH);
 
   glm::vec3 get_position();
+  glm::vec3 get_front();
   void set_position(glm::vec3 newPos);
 
   glm::mat4 get_view_matrix ();

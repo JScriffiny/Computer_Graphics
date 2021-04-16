@@ -101,11 +101,7 @@ vec4 calc_dir_light() {
   diffuse = diff*dir_light.diffuse;
   specular = spec*dir_light.specular;
 
-  //calculate shadow
-  //float shadow = calc_shadow(FragPosLightSpace,0.05);
-
   return vec4(ambient + diffuse + specular,1.0);
-  //return vec4((ambient+(1.0-shadow)*(diffuse+specular),1.0));
 }
 
 float calc_shadow(vec4 fragPosLightSpace,float bias) {

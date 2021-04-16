@@ -209,67 +209,6 @@ void set_texture_rectangle (Shape* rect, glm::vec3 lower_left, float width, floa
     }
 }
 
-//Creates a basic hull (xy plane) for a ship and defines the members of the Shape object referenced by the first argument.
-void set_basic_hull(Shape* hull,glm::vec3 lower_left, float width, float height, bool flip_normal, bool outline) {
-    float data[] = {
-        lower_left.x, lower_left.y, 0.0f,
-        lower_left.x+width, lower_left.y, 0.0f,
-        lower_left.x+width, lower_left.y+height, 0.0f,
-        lower_left.x+0.9f*width, lower_left.y+height+0.05f,0.0f,
-        lower_left.x+0.8f*width, lower_left.y+height+0.09f,0.0f,
-        lower_left.x+0.7f*width, lower_left.y+height+0.11f,0.0f,
-        lower_left.x+0.6f*width, lower_left.y+height+0.13f,0.0f,
-        lower_left.x+0.5f*width, lower_left.y+height+0.15f,0.0f,
-        lower_left.x+0.4f*width, lower_left.y+height+0.13f,0.0f,
-        lower_left.x+0.3f*width, lower_left.y+height+0.11f,0.0f,
-        lower_left.x+0.2f*width, lower_left.y+height+0.09f,0.0f,
-        lower_left.x+0.1f*width, lower_left.y+height+0.05f,0.0f,
-        lower_left.x, lower_left.y+height, 0.0f
-    };
-    std::vector<Vertex_Attribute> va_vec;
-    va_vec.push_back(build_vertex_attr(3,GL_FLOAT,3*sizeof(float),0));
-    hull->initialize(data,sizeof(data),sizeof(data)/sizeof(float)/3.0,va_vec,GL_TRIANGLE_FAN);
-    if (outline) {
-        int num_points = sizeof(data)/sizeof(float)/3;
-        unsigned int indices[num_points] ={0};
-        for (int i = 0; i < num_points;i++){
-            indices[i] = i;
-        }
-        hull->set_EBO(indices,num_points);
-    }
-}
-
-//Creates a basic hull (xy plane) for a ship and defines the members of the Shape object referenced by the first argument.
-void set_texture_hull(Shape* hull,glm::vec3 lower_left, float width, float height, bool flip_normal, bool outline) {
-    float data[] = {
-        lower_left.x, lower_left.y, 0.0f, 0.0f, 0.0f,
-        lower_left.x+width, lower_left.y, 0.0f, 1.0f, 0.0f,
-        lower_left.x+width, lower_left.y+height, 0.0f, 1.0f,1.0f,
-        lower_left.x+0.9f*width, lower_left.y+height+0.05f,0.0f, 0.9f,1.05f,
-        lower_left.x+0.8f*width, lower_left.y+height+0.09f,0.0f, 0.8f,1.09f,
-        lower_left.x+0.7f*width, lower_left.y+height+0.11f,0.0f, 0.7f, 1.11f,
-        lower_left.x+0.6f*width, lower_left.y+height+0.13f,0.0f, 0.6f, 1.13f,
-        lower_left.x+0.5f*width, lower_left.y+height+0.15f,0.0f, 0.5f, 1.15f,
-        lower_left.x+0.4f*width, lower_left.y+height+0.13f,0.0f, 0.4f, 1.13f,
-        lower_left.x+0.3f*width, lower_left.y+height+0.11f,0.0f, 0.3f, 1.11f,
-        lower_left.x+0.2f*width, lower_left.y+height+0.09f,0.0f, 0.2f, 1.09f,
-        lower_left.x+0.1f*width, lower_left.y+height+0.05f,0.0f, 0.1f, 1.04f,
-        lower_left.x, lower_left.y+height, 0.0f, 0.0f, 1.0f,
-    };
-    std::vector<Vertex_Attribute> va_vec;
-    va_vec.push_back(build_vertex_attr(3,GL_FLOAT,5*sizeof(float),0));
-    va_vec.push_back(build_vertex_attr(2,GL_FLOAT,5*sizeof(float),3*sizeof(float)));
-    hull->initialize(data,sizeof(data),sizeof(data)/sizeof(float)/5.0,va_vec,GL_TRIANGLE_FAN);
-    if (outline) {
-        int num_points = sizeof(data)/sizeof(float)/3;
-        unsigned int indices[num_points] ={0};
-        for (int i = 0; i < num_points;i++){
-            indices[i] = i;
-        }
-        hull->set_EBO(indices,num_points);
-    }
-}
-
 void set_basic_starfield (Shape* stars, int num_stars) {
     float data[num_stars*3] = {0.0f};
     for (int i = 0; i < num_stars; i+=3) {

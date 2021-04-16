@@ -54,6 +54,9 @@ void Camera::process_mouse_movement (float xoffset, float yoffset,bool constrain
 glm::vec3 Camera::get_position() {
     return this->position;
 }
+glm::vec3 Camera::get_front() {
+    return this->front;
+}
 
 void Camera::set_position(glm::vec3 newPos) {
     this->position = newPos;

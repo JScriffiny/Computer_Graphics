@@ -89,7 +89,6 @@ void World::process_input (GLFWwindow *win, Camera camera1, Camera camera2, bool
 
   //Print player's current position
   if (glfwGetKey(win,GLFW_KEY_P)==GLFW_PRESS && print_flag) {
-    this->dir_light_on = !this->dir_light_on;
     //Print current position
     glm::vec3 pos = this->camera->get_position();
     std::cout << "My Position: (" + std::to_string(pos.x);
@@ -133,8 +132,6 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,bool plate_pr
     current_shader->use();
     current_shader->setVec4("view_position", glm::vec4(pos.x,pos.y,pos.z,1.0f));
     current_shader->setMat4("view",wv);
-    
-    //Point Light
     current_shader->setVec3("point_light.position",glm::vec3(pos.x,pos.y,pos.z));
     current_shader->setVec3("point_light.ambient",0.2f*this->point_light_color);
     current_shader->setVec3("point_light.diffuse",this->point_light_color);
@@ -143,20 +140,20 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,bool plate_pr
     current_shader->setFloat("point_light.constant",1.0f);
     current_shader->setFloat("point_light.linear",0.14f);
     current_shader->setFloat("point_light.quadratic",0.07f);
-
-    //Directional Light
     current_shader->setVec3("dir_light.direction",this->dir_light_direction);
     current_shader->setVec3("dir_light.ambient",0.2f*this->dir_light_color);
     current_shader->setVec3("dir_light.diffuse",this->dir_light_color);
     current_shader->setVec3("dir_light.specular",this->dir_light_color);
     current_shader->setBool("dir_light.on",(this->dir_light_on || plate_pressed));
+    current_shader->setFloat("time",glfwGetTime());
   }
 
   if (optional_shader != NULL) {
     //Create light's point of view
     glm::mat4 lightProjection = glm::ortho(-10.0f,10.0f,-10.0f,10.0f,1.0f,20.0f);
     glm::vec3 light_pos = glm::vec3(this->point_light_position);
-    glm::mat4 lightView = glm::lookAt(light_pos,glm::vec3(0.0f),glm::vec3(0.0f,1.0f,0.0f));
+    glm::vec3 front = this->camera->get_front();
+    glm::mat4 lightView = glm::lookAt(light_pos,front*10.0f,glm::vec3(0.0f,1.0f,0.0f));
     glm::mat4 lightSpaceMatrix = lightProjection * lightView; 
     //Set depthShader's point of view
     optional_shader->use();
@@ -204,7 +201,7 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,bool plate_pr
   furniture_shader->setBool("use_texture",true);
   furniture->draw(furniture_shader->ID);
   furniture_shader->setBool("use_texture",false);
-  
+
   //Draw worldFloor
   Shape* worldFloor = objects["worldFloor"].shape;
   Shader* worldFloor_shader = objects["worldFloor"].shader;
@@ -219,7 +216,7 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,bool plate_pr
   worldFloor_shader->setMat4("model",worldFloor_model);
   glBindTexture(GL_TEXTURE_2D,this->floor_texture);
   worldFloor->draw(worldFloor_shader->ID);
-
+  
   //Draw cube1 (silver)
   Shape* cube1 = objects["cube1"].shape;
   Shader* cube1_shader = objects["cube1"].shader;

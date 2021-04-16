@@ -30,15 +30,21 @@ Material silver{glm::vec3(0.19225,0.19225,0.19225),
                  0.4*128};
 
 //First-Person Camera
-Camera camera(glm::vec3(10.0f,-3.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f),180.0f, 0.0f);
-
+Camera camera(glm::vec3(10.0f,-3.0f,-3.0f),glm::vec3(0.0f,1.0f,0.0f),115.0f, 0.0f);
 //Bird's Eye Camera
 Camera camera_bird(glm::vec3(-0.5f,18.0f,1.0f),glm::vec3(0.0f,-1.0f,0.0f),-90.0f, -85.0f);
+
+//Post Processing Global
+int post_process_selection = 1;
+bool post_process_flag = true;
+bool nightvision_on = false;
 
 //Capture the mouse position data on mouse movement
 void render_skybox(Shader * shader, Shape shape, unsigned int texture);
 void mouse_callback (GLFWwindow* win, double xpos, double ypos);
 glm::mat4 getLightPOV();
+void post_process_input(GLFWwindow* win);
+
 
 //Create fonts
 Font arialFont("fonts/ArialBlackLarge.bmp","fonts/ArialBlack.csv",0.3,0.4);
@@ -108,7 +114,11 @@ int main() {
     "skybox/front.jpg",
     "skybox/back.jpg"
   };
-  unsigned int cubemapTexture = get_cube_map(faces,false); 
+  unsigned int cubemapTexture = get_cube_map(faces,false);
+
+  //Post Processing Rectangle
+  Shape post_rect;
+  set_texture_rectangle(&post_rect,glm::vec3(-1.0f,-1.0f,0.0f),2.0f,2.0f,false,false,1.0f);
   
   //Initialize the shader programs
   Shader fill_program("shaders/vertexShader.glsl","shaders/fragmentShader.glsl");
@@ -118,6 +128,7 @@ int main() {
   Shader import_program("shaders/importVertexShader.glsl","shaders/importFragmentShader.glsl");
   Shader depth_program("shaders/depthVertexShader.glsl","shaders/depthFragmentShader.glsl");
   Shader skybox_program("shaders/skyboxVertexShader.glsl","shaders/skyboxFragmentShader.glsl");
+  Shader post_process_program("shaders/postVertexShader.glsl","shaders/postFragmentShader.glsl");
 
   //Map structure used to pass objects to render scene function
   //Draw_Data is a structure that has a shape and a shader
@@ -145,7 +156,7 @@ int main() {
   
   //Initialize the shaders.
   std::vector<Shader*> shaders = {&fill_program,&outline_program,&texture_program,
-                                  &import_program,&depth_program,&skybox_program};
+                                  &import_program,&depth_program,&skybox_program,&post_process_program};
   glm::mat4 identity(1.0f);
   glm::mat4 model = identity;
   glm::mat4 view = identity;
@@ -176,6 +187,7 @@ int main() {
     shaders[i]->setVec3("dir_light.diffuse",world.dir_light_color);
     shaders[i]->setVec3("dir_light.specular",world.dir_light_color);
     shaders[i]->setBool("dir_light.on",world.dir_light_on);
+    shaders[i]->setFloat("time",glfwGetTime());
   }
 
   //Enable depth testing to avoid managing ordering of 3D objects
@@ -187,19 +199,35 @@ int main() {
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-  //font_program shader setup
-  font_program.use();
-  font_program.setMat4("view",glm::mat4(1.0));
-  font_program.setMat4("projection", glm::ortho(-5.0, 5.0, -5.0, 5.0, -1.0, 1.0));
-  font_program.setVec4("transparentColor", glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
-  font_program.setFloat("alpha", 0.3);
-  font_program.setInt("texture1", 0);
+  //Framebuffer (Post Processing)
+  //Make framebuffer object
+  unsigned int framebuffer;
+  glGenFramebuffers(1, &framebuffer);
+  glBindFramebuffer(GL_FRAMEBUFFER, framebuffer); 
+  //Create and bind a texture
+  unsigned int texColorBuffer;
+  glGenTextures(1, &texColorBuffer);
+  glBindTexture(GL_TEXTURE_2D, texColorBuffer);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, WIN_WIDTH, WIN_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glBindTexture(GL_TEXTURE_2D, 0);
+  //Attach texture to framebuffer object
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texColorBuffer, 0);
+  //Make renderbuffer object
+  unsigned int rbo;
+  glGenRenderbuffers(1, &rbo);
+  glBindRenderbuffer(GL_RENDERBUFFER, rbo); 
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, WIN_WIDTH, WIN_HEIGHT);
+  glBindRenderbuffer(GL_RENDERBUFFER, 0);
+  //Attach the renderbuffer to framebuffer depth and stencil attachments
+  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+  //Check if framebuffer is complete
+  if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+	  std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-  //Cursor setup
-  glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_DISABLED);
-  glfwSetCursorPosCallback(window,mouse_callback);
-
-  //Framebuffer object for depth map
+  /* //Framebuffer (Shadows)
   unsigned int depthMapFBO;
   glGenFramebuffers(1, &depthMapFBO);
   const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024; //2048x2048 for better resolution
@@ -219,7 +247,19 @@ int main() {
   glDrawBuffer(GL_NONE);
   glReadBuffer(GL_NONE);
   //Reset to default
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glBindFramebuffer(GL_FRAMEBUFFER, 0); */
+
+  //font_program shader setup
+  font_program.use();
+  font_program.setMat4("view",glm::mat4(1.0));
+  font_program.setMat4("projection", glm::ortho(-5.0, 5.0, -5.0, 5.0, -1.0, 1.0));
+  font_program.setVec4("transparentColor", glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+  font_program.setFloat("alpha", 0.3);
+  font_program.setInt("texture1", 0);
+
+  //Cursor setup
+  glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_DISABLED);
+  glfwSetCursorPosCallback(window,mouse_callback);
   
   //glfwWindowShouldClose checks if GLFW has been instructed to close
   while(!glfwWindowShouldClose(window)) {
@@ -227,12 +267,15 @@ int main() {
     world.deltaTime = currentFrame - world.lastFrame;
     world.lastFrame = currentFrame;
 
+    //Bind new framebuffer
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+
     //Set the clear color
     glm::vec4 clr = world.clear_color;
     glClearColor(clr.r,clr.g,clr.b,clr.a);
 
-    glViewport(0,0,SHADOW_WIDTH,SHADOW_HEIGHT);
-    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    /* glViewport(0,0,SHADOW_WIDTH,SHADOW_HEIGHT);
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO); */
     //Clear appropriate buffers
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
@@ -240,16 +283,17 @@ int main() {
     world.process_input(window, camera, camera_bird,door.get_door_status());
     door.process_input(window,world.camera->get_position());
     pressurePlate.process_input(window,world.camera->get_position());
+    post_process_input(window);
 
     //2. Render Scene
-    world.render_scene(draw_map,pressurePlate.get_plate_status(),&depth_program);
+    /* world.render_scene(draw_map,pressurePlate.get_plate_status(),&depth_program);
     door.draw(&import_program,door_texture);
     pressurePlate.draw(&import_program,pressurePlate_texture);
     render_skybox(&skybox_program,skybox,cubemapTexture);
 
     glViewport(0,0,WIN_WIDTH,WIN_HEIGHT);
     glBindFramebuffer(GL_FRAMEBUFFER,0);
-    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);//clear stencil too if needed
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);//clear stencil too if needed */
 
     //texture_program.use();
     //texture_program.setMat4("lightSpaceMatrix",getLightPOV());
@@ -262,6 +306,17 @@ int main() {
     /****Heads up display must be last so that the semi-transparency works***/
     char my_char[2] = "+";
     arialFont.draw_char(my_char[0],glm::vec2(-0.2,0.0),font_program);
+
+    //Unbind framebuffer
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f); 
+    post_process_program.use();
+    glBindTexture(GL_TEXTURE_2D, texColorBuffer);
+    glDisable(GL_DEPTH_TEST);
+    //Set uniform value for post_process_selection value
+    post_process_program.setInt("post_process_selection", post_process_selection);
+    post_rect.draw(post_process_program.ID);
+    glEnable(GL_DEPTH_TEST);
     
     //3. Poll for events
     glfwPollEvents(); //checks for events -- mouse/keyboard input
@@ -305,7 +360,69 @@ void mouse_callback(GLFWwindow* win, double xpos, double ypos) {
 glm::mat4 getLightPOV() {
   glm::mat4 lightProjection = glm::ortho(-10.0f,10.0f,-10.0f,10.0f,1.0f,20.0f);
   glm::vec3 light_pos = glm::vec3(world.point_light_position);
-  glm::mat4 lightView = glm::lookAt(light_pos,glm::vec3(0.0f),glm::vec3(0.0f,1.0f,0.0f));
+  glm::vec3 front = world.camera->get_front();
+  glm::mat4 lightView = glm::lookAt(light_pos,front*10.0f,glm::vec3(0.0f,1.0f,0.0f));
   glm::mat4 lightSpaceMatrix = lightProjection * lightView;
   return lightSpaceMatrix;
+}
+
+void post_process_input(GLFWwindow* win) {
+  if (glfwGetKey(win,GLFW_KEY_1) == GLFW_PRESS && post_process_flag) {
+    post_process_selection = 1;
+    nightvision_on = false;
+    post_process_flag = false;
+  }
+  if (glfwGetKey(win,GLFW_KEY_1) == GLFW_RELEASE) {
+    post_process_flag = true;
+  }
+  if (glfwGetKey(win,GLFW_KEY_2) == GLFW_PRESS && post_process_flag) {
+    post_process_selection = 2;
+    nightvision_on = true;
+    post_process_flag = false;
+  }
+  if (glfwGetKey(win,GLFW_KEY_2) == GLFW_RELEASE) {
+    post_process_flag = true;
+  }
+  if (glfwGetKey(win,GLFW_KEY_3) == GLFW_PRESS && post_process_flag) {
+    post_process_selection = 3;
+    nightvision_on = false;
+    post_process_flag = false;
+  }
+  if (glfwGetKey(win,GLFW_KEY_3) == GLFW_RELEASE) {
+    post_process_flag = true;
+  }
+  if (glfwGetKey(win,GLFW_KEY_4) == GLFW_PRESS && post_process_flag) {
+    post_process_selection = 4;
+    nightvision_on = false;
+    post_process_flag = false;
+  }
+  if (glfwGetKey(win,GLFW_KEY_4) == GLFW_RELEASE) {
+    post_process_flag = true;
+  }
+  if (glfwGetKey(win,GLFW_KEY_5) == GLFW_PRESS && post_process_flag) {
+    post_process_selection = 5;
+    nightvision_on = false;
+    post_process_flag = false;
+  }
+  if (glfwGetKey(win,GLFW_KEY_5) == GLFW_RELEASE) {
+    post_process_flag = true;
+  }
+  if (glfwGetKey(win,GLFW_KEY_6) == GLFW_PRESS && post_process_flag) {
+    post_process_selection = 6;
+    nightvision_on = false;
+    post_process_flag = false;
+  }
+  if (glfwGetKey(win,GLFW_KEY_6) == GLFW_RELEASE) {
+    post_process_flag = true;
+  }
+  if (glfwGetKey(win,GLFW_KEY_7) == GLFW_PRESS && post_process_flag) {
+    post_process_selection = 7;
+    nightvision_on = false;
+    post_process_flag = false;
+  }
+  if (glfwGetKey(win,GLFW_KEY_7) == GLFW_RELEASE) {
+    post_process_flag = true;
+  }
+  if (nightvision_on) world.dir_light_on = true;
+  else world.dir_light_on = false;
 }
