@@ -28,12 +28,20 @@ class World {
     unsigned int floor_texture = 0;
 
     //Point Light
-    bool point_light_key_pressed = false;
     bool point_light_on = true;
-    bool point_light_redLens = false;
-    glm::vec4 point_light_position = glm::vec4(0.1f, 10.0f, 0.1f, 1.0f); //prevent divide by 0
-    glm::vec3 point_light_color = glm::vec3(0.5f,0.5f,0.5f);
-    
+    glm::vec4 point_light_position = glm::vec4(5.15f,-1.3f,3.75f,1.0f);
+    glm::vec3 point_light_color = glm::vec3(1.0f,1.0f,1.0f);
+
+    //Spot Light
+    bool spot_light_on_flag = false;
+    bool spot_light_redLens_flag = false;
+    bool spot_light_redLens = false;
+    bool spot_light_on = true;
+    glm::vec4 spot_light_position = glm::vec4(0.1f, 10.0f, 0.1f, 1.0f); //prevent divide by 0
+    glm::vec3 spot_light_ambient = glm::vec3(0.1f,0.1f,0.1f);
+    glm::vec3 spot_light_diffuse = glm::vec3(0.8f,0.8f,0.8f);
+    glm::vec3 spot_light_specular = glm::vec3(1.0f,1.0f,1.0f);
+
     //Directional Light
     bool dir_light_key_pressed = false;
     bool dir_light_on = false;

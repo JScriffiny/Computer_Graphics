@@ -34,7 +34,7 @@ Camera camera(glm::vec3(10.0f,-3.0f,-3.0f),glm::vec3(0.0f,1.0f,0.0f),115.0f, 0.0
 //Bird's Eye Camera
 Camera camera_bird(glm::vec3(-0.5f,18.0f,1.0f),glm::vec3(0.0f,-1.0f,0.0f),-90.0f, -85.0f);
 
-//Post Processing Global
+//Post Processing Globals
 int post_process_selection = 1;
 bool post_process_flag = true;
 bool nightvision_on = false;
@@ -170,6 +170,7 @@ int main() {
     shaders[i]->setMat4("projection",projection);
     shaders[i]->setFloat("ambient_strength",0.1);
     shaders[i]->setFloat("specular_strength",1.0f);
+    shaders[i]->setVec4("view_position",glm::vec4(world.camera->get_position(),0.0f));
     //Point Light
     glm::vec3 wp = world.point_light_position;
     shaders[i]->setVec3("point_light.position",glm::vec3(wp.x,wp.y,wp.z));
@@ -181,6 +182,18 @@ int main() {
     shaders[i]->setFloat("point_light.linear",0.14);
     shaders[i]->setFloat("point_light.quadratic",0.07);
     shaders[i]->setFloat("shininess",256);
+    //Spot Light
+    shaders[i]->setVec3("spot_light.position",world.camera->get_position());
+    shaders[i]->setVec3("spot_light.direction",world.camera->get_front());
+    shaders[i]->setFloat("spot_light.cutOff",glm::cos(glm::radians(12.5f)));
+    shaders[i]->setFloat("spot_light.outerCutOff",glm::cos(glm::radians(17.5f)));
+    shaders[i]->setVec3("spot_light.ambient",world.spot_light_ambient);
+    shaders[i]->setVec3("spot_light.diffuse",world.spot_light_diffuse);
+    shaders[i]->setVec3("spot_light.specular",world.spot_light_specular);
+    shaders[i]->setFloat("spot_light.constant",1.0f);
+    shaders[i]->setFloat("spot_light.linear",0.09f);
+    shaders[i]->setFloat("spot_light.quadratic",0.032f);
+    shaders[i]->setBool("spot_light.on",world.spot_light_on);
     //Directional Light
     shaders[i]->setVec3("dir_light.direction",world.dir_light_direction);
     shaders[i]->setVec3("dir_light.ambient",0.2f*world.dir_light_color);

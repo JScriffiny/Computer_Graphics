@@ -72,19 +72,33 @@ void World::process_input (GLFWwindow *win, Camera camera1, Camera camera2, bool
     check_collision(previous_pos,door_open);
   }
 
-  //Toggle headlamp's red lens
-  if (glfwGetKey(win,GLFW_KEY_R)==GLFW_PRESS && !this->point_light_key_pressed) {
-      this->point_light_key_pressed = true;
-      this->point_light_redLens = !this->point_light_redLens;
-      if (point_light_redLens) {
-        this->point_light_color = glm::vec3(1.0f,0.0f,0.0f);
+  //Toggle flashlight's red lens
+  if (glfwGetKey(win,GLFW_KEY_R)==GLFW_PRESS && !this->spot_light_redLens_flag) {
+      this->spot_light_redLens_flag = true;
+      this->spot_light_redLens = !this->spot_light_redLens;
+      if (spot_light_redLens) {
+        this->spot_light_ambient = glm::vec3(0.2f,0.0f,0.0f);
+        this->spot_light_diffuse = glm::vec3(1.0f,0.0f,0.0f);
+        this->spot_light_specular = glm::vec3(1.0f,0.0f,0.0f);
       }
       else {
-        this->point_light_color = glm::vec3(0.5f,0.5f,0.5f);
+        this->spot_light_ambient = glm::vec3(0.1f,0.1f,0.1f);
+        this->spot_light_diffuse = glm::vec3(0.8f,0.8f,0.8f);
+        this->spot_light_specular = glm::vec3(1.0f,1.0f,1.0f);
       }
   }
   if (glfwGetKey(win,GLFW_KEY_R)==GLFW_RELEASE) {
-     this->point_light_key_pressed = false;
+     this->spot_light_redLens_flag = false;
+  }
+
+  //Toggle spot light on and off
+  if (glfwGetKey(win,GLFW_KEY_F)==GLFW_PRESS && !this->spot_light_on_flag) {
+    this->spot_light_on_flag = true;
+    this->spot_light_on = !this->spot_light_on;
+  }
+  if (glfwGetKey(win,GLFW_KEY_F)==GLFW_RELEASE) {
+    this->spot_light_on_flag = false;
+    this->spot_light_diffuse = glm::vec3(0.8f,0.8f,0.8f);
   }
 
   //Print player's current position
@@ -115,7 +129,7 @@ bool has_been_seen (std::vector<Shader*>* seen_vec, Shader* shader) {
 
 void World::render_scene (std::map<std::string, Draw_Data> objects,bool plate_pressed,Shader *optional_shader) {
 
-  glm::vec3 pos = this->camera->get_position();
+  glm::vec3 cam_pos = this->camera->get_position();
   glm::mat4 wv = this->camera->get_view_matrix();
   std::vector<Shader*> seen_vec;
 
@@ -130,16 +144,30 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,bool plate_pr
     Shader* current_shader = it->second.shader;
     
     current_shader->use();
-    current_shader->setVec4("view_position", glm::vec4(pos.x,pos.y,pos.z,1.0f));
+    current_shader->setVec4("view_position", glm::vec4(cam_pos.x,cam_pos.y,cam_pos.z,1.0f));
     current_shader->setMat4("view",wv);
-    current_shader->setVec3("point_light.position",glm::vec3(pos.x,pos.y,pos.z));
+    //Point Light
+    current_shader->setVec3("point_light.position",point_light_position);
     current_shader->setVec3("point_light.ambient",0.2f*this->point_light_color);
     current_shader->setVec3("point_light.diffuse",this->point_light_color);
     current_shader->setVec3("point_light.specular",this->point_light_color);
-    current_shader->setBool("point_light.on",this->point_light_on);
     current_shader->setFloat("point_light.constant",1.0f);
     current_shader->setFloat("point_light.linear",0.14f);
     current_shader->setFloat("point_light.quadratic",0.07f);
+    current_shader->setBool("point_light.on",this->point_light_on);
+    //Spot Light
+    current_shader->setVec3("spot_light.position",cam_pos);
+    current_shader->setVec3("spot_light.direction",this->camera->get_front());
+    current_shader->setFloat("spot_light.cutOff",glm::cos(glm::radians(12.5f)));
+    current_shader->setFloat("spot_light.outerCutOff",glm::cos(glm::radians(17.5f)));
+    current_shader->setVec3("spot_light.ambient",this->spot_light_ambient);
+    current_shader->setVec3("spot_light.diffuse",this->spot_light_diffuse);
+    current_shader->setVec3("spot_light.specular",this->spot_light_specular);
+    current_shader->setFloat("spot_light.constant",1.0f);
+    current_shader->setFloat("spot_light.linear",0.09f);
+    current_shader->setFloat("spot_light.quadratic",0.032f);
+    current_shader->setBool("spot_light.on",this->spot_light_on);
+    //Directional Light
     current_shader->setVec3("dir_light.direction",this->dir_light_direction);
     current_shader->setVec3("dir_light.ambient",0.2f*this->dir_light_color);
     current_shader->setVec3("dir_light.diffuse",this->dir_light_color);
@@ -207,8 +235,6 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,bool plate_pr
   Shader* worldFloor_shader = objects["worldFloor"].shader;
   worldFloor_shader->use();
   worldFloor_shader->setMat4("transform",glm::mat4(1.0f));
-  worldFloor_shader->setVec4("view_position", glm::vec4(pos.x,pos.y,pos.z,1.0f));
-  worldFloor_shader->setVec3("point_light.position",glm::vec3(pos.x,pos.y,pos.z));
   glm::mat4 worldFloor_model(1.0f);
   worldFloor_model = glm::translate(worldFloor_model,glm::vec3(0.0,-4.0,0.0));
   worldFloor_model = glm::scale(worldFloor_model,glm::vec3(100.0f,100.0f,100.0f));
@@ -221,8 +247,7 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,bool plate_pr
   Shape* cube1 = objects["cube1"].shape;
   Shader* cube1_shader = objects["cube1"].shader;
   glm::mat4 cube1_transform(1.0f);
-  //cube1_transform = glm::translate(cube1_transform,glm::vec3(-1.0f,-3.35f,1.0f));
-  cube1_transform = glm::translate(cube1_transform,glm::vec3(7.0f,-3.0f,0.0f));
+  cube1_transform = glm::translate(cube1_transform,glm::vec3(-1.0f,-3.35f,1.0f));
   cube1_transform = glm::scale(cube1_transform,glm::vec3(0.25f,0.25f, 0.25f));
   cube1_shader->use();
   cube1_shader->setMat4("transform",glm::mat4(1.0f));
