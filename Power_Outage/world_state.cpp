@@ -188,12 +188,25 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,bool plate_pr
     optional_shader->setMat4("lightSpaceMatrix",lightSpaceMatrix);
   }
 
+  //Draw worldFloor
+  Shape* worldFloor = objects["worldFloor"].shape;
+  Shader* worldFloor_shader = objects["worldFloor"].shader;
+  if (optional_shader != NULL) {
+    worldFloor_shader = optional_shader;
+  }
+  worldFloor_shader->use();
+  worldFloor_shader->setMat4("transform",glm::mat4(1.0f));
+  glm::mat4 worldFloor_model(1.0f);
+  worldFloor_model = glm::translate(worldFloor_model,glm::vec3(0.0,-4.0,0.0));
+  worldFloor_model = glm::scale(worldFloor_model,glm::vec3(100.0f,100.0f,100.0f));
+  worldFloor_model = glm::rotate(worldFloor_model,glm::radians(-90.0f),glm::vec3(1.0,0.0,0.0));
+  worldFloor_shader->setMat4("model",worldFloor_model);
+  glBindTexture(GL_TEXTURE_2D,this->floor_texture);
+  worldFloor->draw(worldFloor_shader->ID);
+
   //Draw officeFloor
   Shape* officeFloor = objects["officeFloor"].shape;
   Shader* officeFloor_shader = objects["officeFloor"].shader;
-  if (optional_shader != NULL) {
-    officeFloor_shader = optional_shader;
-  }
   officeFloor_shader->use();
   glm::mat4 officeFloor_transform(1.0f);
   officeFloor_transform = glm::translate(officeFloor_transform,glm::vec3(0.0f,-3.99f,0.0f));
@@ -229,19 +242,6 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,bool plate_pr
   furniture_shader->setBool("use_texture",true);
   furniture->draw(furniture_shader->ID);
   furniture_shader->setBool("use_texture",false);
-
-  //Draw worldFloor
-  Shape* worldFloor = objects["worldFloor"].shape;
-  Shader* worldFloor_shader = objects["worldFloor"].shader;
-  worldFloor_shader->use();
-  worldFloor_shader->setMat4("transform",glm::mat4(1.0f));
-  glm::mat4 worldFloor_model(1.0f);
-  worldFloor_model = glm::translate(worldFloor_model,glm::vec3(0.0,-4.0,0.0));
-  worldFloor_model = glm::scale(worldFloor_model,glm::vec3(100.0f,100.0f,100.0f));
-  worldFloor_model = glm::rotate(worldFloor_model,glm::radians(-90.0f),glm::vec3(1.0,0.0,0.0));
-  worldFloor_shader->setMat4("model",worldFloor_model);
-  glBindTexture(GL_TEXTURE_2D,this->floor_texture);
-  worldFloor->draw(worldFloor_shader->ID);
   
   //Draw cube1 (silver)
   Shape* cube1 = objects["cube1"].shape;

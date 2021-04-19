@@ -40,9 +40,10 @@ bool post_process_flag = true;
 bool nightvision_on = false;
 
 //Capture the mouse position data on mouse movement
-void render_skybox(Shader * shader, Shape shape, unsigned int texture);
 void mouse_callback (GLFWwindow* win, double xpos, double ypos);
 glm::mat4 getLightPOV();
+void render_skybox(Shader * shader, Shape shape, unsigned int texture);
+void apply_post_processing(Shader * shader, Shape shape, unsigned int texture);
 void post_process_input(GLFWwindow* win);
 
 
@@ -307,7 +308,6 @@ int main() {
     glViewport(0,0,WIN_WIDTH,WIN_HEIGHT);
     glBindFramebuffer(GL_FRAMEBUFFER,0);
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);//clear stencil too if needed */
-
     //texture_program.use();
     //texture_program.setMat4("lightSpaceMatrix",getLightPOV());
 
@@ -320,39 +320,21 @@ int main() {
     char my_char[2] = "+";
     arialFont.draw_char(my_char[0],glm::vec2(-0.2,0.0),font_program);
 
-    //Unbind framebuffer
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f); 
-    post_process_program.use();
-    glBindTexture(GL_TEXTURE_2D, texColorBuffer);
-    glDisable(GL_DEPTH_TEST);
-    //Set uniform value for post_process_selection value
-    post_process_program.setInt("post_process_selection", post_process_selection);
-    post_rect.draw(post_process_program.ID);
-    glEnable(GL_DEPTH_TEST);
+    //Post Processing
+    apply_post_processing(&post_process_program,post_rect,texColorBuffer);
     
     //3. Poll for events
     glfwPollEvents(); //checks for events -- mouse/keyboard input
     
     //4. Swap Buffers
     glfwSwapBuffers(window); //swap the color buffer used to display
-    
   }
 
   glfwTerminate(); //clean/delete GLFW resources
   return 0;
 }
 
-void render_skybox(Shader * shader, Shape shape, unsigned int texture) {
-  shader->use();
-  glm::mat4 temp_view = glm::mat4(glm::mat3(camera.get_view_matrix())); 
-  shader->setMat4("view",temp_view);
-  glDepthFunc(GL_EQUAL);
-  glBindTexture(GL_TEXTURE_CUBE_MAP,texture);
-  glDrawArrays(GL_TRIANGLES, 0, 36);
-  shape.draw(shader->ID);
-  glDepthFunc(GL_LESS);
-}
+
 
 void mouse_callback(GLFWwindow* win, double xpos, double ypos) {
   if (world.first_mouse) {
@@ -379,7 +361,31 @@ glm::mat4 getLightPOV() {
   return lightSpaceMatrix;
 }
 
+void render_skybox(Shader * shader, Shape shape, unsigned int texture) {
+  shader->use();
+  glm::mat4 temp_view = glm::mat4(glm::mat3(camera.get_view_matrix())); 
+  shader->setMat4("view",temp_view);
+  glDepthFunc(GL_EQUAL);
+  glBindTexture(GL_TEXTURE_CUBE_MAP,texture);
+  glDrawArrays(GL_TRIANGLES, 0, 36);
+  shape.draw(shader->ID);
+  glDepthFunc(GL_LESS);
+}
+
+void apply_post_processing(Shader * shader, Shape shape, unsigned int texture) {
+  //Unbind framebuffer
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f); 
+    shader->use();
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glDisable(GL_DEPTH_TEST);
+    shader->setInt("post_process_selection", post_process_selection);
+    shape.draw(shader->ID);
+    glEnable(GL_DEPTH_TEST);
+}
+
 void post_process_input(GLFWwindow* win) {
+  //Normal Display
   if (glfwGetKey(win,GLFW_KEY_1) == GLFW_PRESS && post_process_flag) {
     post_process_selection = 1;
     nightvision_on = false;
@@ -388,6 +394,7 @@ void post_process_input(GLFWwindow* win) {
   if (glfwGetKey(win,GLFW_KEY_1) == GLFW_RELEASE) {
     post_process_flag = true;
   }
+  //Night Vision
   if (glfwGetKey(win,GLFW_KEY_2) == GLFW_PRESS && post_process_flag) {
     post_process_selection = 2;
     nightvision_on = true;
@@ -396,6 +403,7 @@ void post_process_input(GLFWwindow* win) {
   if (glfwGetKey(win,GLFW_KEY_2) == GLFW_RELEASE) {
     post_process_flag = true;
   }
+  //Grayscale
   if (glfwGetKey(win,GLFW_KEY_3) == GLFW_PRESS && post_process_flag) {
     post_process_selection = 3;
     nightvision_on = false;
@@ -404,6 +412,7 @@ void post_process_input(GLFWwindow* win) {
   if (glfwGetKey(win,GLFW_KEY_3) == GLFW_RELEASE) {
     post_process_flag = true;
   }
+  //Inverse Color
   if (glfwGetKey(win,GLFW_KEY_4) == GLFW_PRESS && post_process_flag) {
     post_process_selection = 4;
     nightvision_on = false;
@@ -412,6 +421,7 @@ void post_process_input(GLFWwindow* win) {
   if (glfwGetKey(win,GLFW_KEY_4) == GLFW_RELEASE) {
     post_process_flag = true;
   }
+  //Sharpen
   if (glfwGetKey(win,GLFW_KEY_5) == GLFW_PRESS && post_process_flag) {
     post_process_selection = 5;
     nightvision_on = false;
@@ -420,6 +430,7 @@ void post_process_input(GLFWwindow* win) {
   if (glfwGetKey(win,GLFW_KEY_5) == GLFW_RELEASE) {
     post_process_flag = true;
   }
+  //Blur
   if (glfwGetKey(win,GLFW_KEY_6) == GLFW_PRESS && post_process_flag) {
     post_process_selection = 6;
     nightvision_on = false;
@@ -428,6 +439,7 @@ void post_process_input(GLFWwindow* win) {
   if (glfwGetKey(win,GLFW_KEY_6) == GLFW_RELEASE) {
     post_process_flag = true;
   }
+  //Edge detection
   if (glfwGetKey(win,GLFW_KEY_7) == GLFW_PRESS && post_process_flag) {
     post_process_selection = 7;
     nightvision_on = false;
@@ -436,6 +448,7 @@ void post_process_input(GLFWwindow* win) {
   if (glfwGetKey(win,GLFW_KEY_7) == GLFW_RELEASE) {
     post_process_flag = true;
   }
+  //Directional light makes nightvision actually useful
   if (nightvision_on) world.dir_light_on = true;
   else world.dir_light_on = false;
 }
