@@ -5,9 +5,11 @@
 #include <iostream>
 #include <map>
 #include <vector>
+#include "Font.hpp"
 #include "world_state.hpp"
 #include "moving_door.hpp"
 #include "moving_plate.hpp"
+#include "post_processor.hpp"
 
 World::World(int width, int height) {
     this->height = height;
@@ -127,7 +129,7 @@ bool has_been_seen (std::vector<Shader*>* seen_vec, Shader* shader) {
   return seen;
 }
 
-void World::render_scene (std::map<std::string, Draw_Data> objects,bool plate_pressed,Shader *optional_shader) {
+void World::render_scene (std::map<std::string, Draw_Data> objects,bool plate_pressed,bool nightvisionOn,Shader *optional_shader) {
 
   glm::vec3 cam_pos = this->camera->get_position();
   glm::mat4 wv = this->camera->get_view_matrix();
@@ -172,7 +174,7 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,bool plate_pr
     current_shader->setVec3("dir_light.ambient",0.2f*this->dir_light_color);
     current_shader->setVec3("dir_light.diffuse",this->dir_light_color);
     current_shader->setVec3("dir_light.specular",this->dir_light_color);
-    current_shader->setBool("dir_light.on",(this->dir_light_on || plate_pressed));
+    current_shader->setBool("dir_light.on",(this->dir_light_on || plate_pressed || nightvisionOn));
     current_shader->setFloat("time",glfwGetTime());
   }
 
@@ -292,5 +294,44 @@ void World::check_collision(glm::vec3 previous_pos,bool door_open) {
   if (x > -ref2 && x < ref2 && z < -ref1 && z > -ref2) { //right wall
     this->camera->set_position(previous_pos);
   }
+}
+
+void World::render_headsUp_display(Shader * fill_program, Shader font_program, Shape heads_up,
+                                   glm::mat4 view,glm::mat4 projection,float alpha_value,Font font) {
+  fill_program->use();
+  fill_program->setMat4("model",glm::mat4(1.0f));
+  fill_program->setMat4("view",glm::mat4(1.0));
+  fill_program->setMat4("projection",glm::ortho(-5.0,5.0,-5.0,5.0,-1.0,1.0));
+  fill_program->setBool("use_set_color",true);
+  fill_program->setVec4("set_color",glm::vec4(0.0f,0.0f,0.7f,0.3f));
+  heads_up.draw(fill_program->ID);
+  fill_program->setMat4("view",view);
+  fill_program->setMat4("projection",projection);
+  fill_program->setBool("use_set_color",false);
+
+  glm::vec3 cam_pos = this->camera->get_position();
+  std::string labels[3] = {"X","Y","Z"};
+  std::string disp_string = " Camera: ";
+  for (int k = 0; k < 3; k++) {
+    std::string num_string = std::to_string(cam_pos[k]);
+    num_string = num_string.substr(0,num_string.find(".")+2);
+    if (k == 0) disp_string += "(" + labels[k] + ": " + num_string + ", ";
+    else if (k == 1) disp_string += labels[k] + ": " + num_string + ", ";
+    else disp_string += labels[k] + ": " + num_string + ")";
+  }
   
+  font.draw_text(disp_string,glm::vec2(0.8,-5.0),font_program);
+  font_program.use();
+  font_program.setFloat("alpha",alpha_value);
+}
+
+void World::render_skybox(Shader * shader, Shape shape, unsigned int texture) {
+  shader->use();
+  glm::mat4 temp_view = glm::mat4(glm::mat3(this->camera->get_view_matrix())); 
+  shader->setMat4("view",temp_view);
+  glDepthFunc(GL_EQUAL);
+  glBindTexture(GL_TEXTURE_CUBE_MAP,texture);
+  glDrawArrays(GL_TRIANGLES, 0, 36);
+  shape.draw(shader->ID);
+  glDepthFunc(GL_LESS);
 }

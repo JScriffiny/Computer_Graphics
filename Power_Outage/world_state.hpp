@@ -18,8 +18,11 @@ class World {
     //Create the world state using provided window dimensions.
     World(int width, int height);
     void process_input(GLFWwindow* win, Camera camera1, Camera camera2,bool door_open);
-    void render_scene (std::map<std::string, Draw_Data> objects, bool plate_pressed,Shader *optional_shader = NULL);
+    void render_scene (std::map<std::string, Draw_Data> objects, bool plate_pressed,bool nightvisionOn,Shader *optional_shader = NULL);
     void check_collision(glm::vec3 previous_pos,bool door_open);
+    void render_headsUp_display(Shader * fill_program, Shader font_program, Shape heads_up,
+                                glm::mat4 view,glm::mat4 projection,float alpha_value,Font font);
+    void render_skybox(Shader * shader, Shape shape, unsigned int texture);
     
     //These are left public for convenience (but depending upon the complexity of your world state, it would 
     //make sense to keep some or all of the data members protected)
