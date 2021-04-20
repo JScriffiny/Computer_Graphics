@@ -37,10 +37,8 @@ Material silver{glm::vec3(0.19225,0.19225,0.19225),
                  glm::vec3(0.508273,0.508273,0.508273),
                  0.4*128};
 
-//First-Person Camera
+//Create camera object
 Camera camera(glm::vec3(10.0f,-3.0f,-3.0f),glm::vec3(0.0f,1.0f,0.0f),115.0f, 0.0f);
-//Bird's Eye Camera
-Camera camera_bird(glm::vec3(-0.5f,18.0f,1.0f),glm::vec3(0.0f,-1.0f,0.0f),-90.0f, -85.0f);
 
 //Capture the mouse position data on mouse movement
 void mouse_callback (GLFWwindow* win, double xpos, double ypos);
@@ -62,7 +60,7 @@ int main() {
   //The font must be initialized -after- the environment.
   arialFont.initialize();
 
-  //Import an objects
+  //Import objects
   ImportOBJ new_importer;
 
   /** Office Scene setup **/
@@ -301,11 +299,11 @@ int main() {
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
     //1. Process Input
-    world.process_input(window, camera, camera_bird,door.get_door_status());
+    world.process_input(window,door.get_door_status());
     door.process_input(window,camPos);
     pressurePlate.process_input(window,camPos);
-    //post_process_input(window);
-    post_processor.post_process_input(window);
+    post_processor.process_input(window);
+    text_display.process_input(window);
 
     //2. Render Scene
     /* world.render_scene(draw_map,pressurePlate.get_plate_status(),&depth_program);
@@ -326,9 +324,10 @@ int main() {
     
     /****Heads up display must be last so that the semi-transparency works***/
     text_display.render_player_coordinates(camPos);
+    text_display.render_fire();
 
     //Post Processing
-    post_processor.apply_post_processing(&post_process_program,texColorBuffer);
+    post_processor.render_post_processing(&post_process_program,texColorBuffer);
     
     //3. Poll for events
     glfwPollEvents(); //checks for events -- mouse/keyboard input

@@ -16,97 +16,92 @@ World::World(int width, int height) {
     this->width = width;
 }
 
-//Singular key press booleans
-bool print_flag = true;
-bool spawn_pressed = false;
-
 //for processing all input
-void World::process_input (GLFWwindow *win, Camera camera1, Camera camera2, bool door_open) {
+void World::process_input (GLFWwindow *win, bool door_open) {
   //Press Escape key to exit
-  if (glfwGetKey(win,GLFW_KEY_0) == GLFW_PRESS) {
+  if (glfwGetKey(win,GLFW_KEY_ESCAPE) == GLFW_PRESS) {
     glfwSetWindowShouldClose(win,true);
   }
 
   //Toggle camera mode with "Tab" key (First Person <-> Bird's eye view)
-  if (glfwGetKey(win,GLFW_KEY_TAB)==GLFW_PRESS && !this->cameraView_key_pressed) {
-      this->cameraView_key_pressed = true;
-      if (!this->camera2_on) {
-        this->camera2_on = true;
-        this->temp_camera = this->camera;
-        this->camera = &camera2;
-        this->dir_light_on = true; //turn ON lights when in bird's eye view
+  if (glfwGetKey(win,GLFW_KEY_TAB)==GLFW_PRESS && !cameraView_key_pressed) {
+      cameraView_key_pressed = true;
+      if (!bird_cam_on) {
+        bird_cam_on = true;
+        saved_player_pos = camera->get_position();
+        camera->set_position(bird_cam_pos);
+        dir_light_on = true; //turn ON lights when in bird's eye view
       }
       else {
-        this->dir_light_on = false; //turn OFF lights when in bird's eye view
-        this->camera2_on = false;
-        this->camera = temp_camera;
+        bird_cam_on = false;
+        bird_cam_pos = camera->get_position();
+        camera->set_position(saved_player_pos);
+        dir_light_on = false; //turn OFF lights when in bird's eye view
       }
   }
   if (glfwGetKey(win,GLFW_KEY_TAB)==GLFW_RELEASE) {
-     this->cameraView_key_pressed = false;
+     cameraView_key_pressed = false;
   }
 
   //Press backspace to teleport back to spawn
   if (glfwGetKey(win,GLFW_KEY_BACKSPACE) == GLFW_PRESS && !spawn_pressed) {
     spawn_pressed = true;
-    this->camera->set_position(glm::vec3(10.0f,-3.0f,0.0f));
+    camera->set_position(glm::vec3(10.0f,-3.0f,0.0f));
   }
   if (glfwGetKey(win,GLFW_KEY_BACKSPACE)==GLFW_RELEASE) {
     spawn_pressed = false;
   }
 
   //First-Person Movement (WASD)
-  if (!this->camera2_on) {
-    glm::vec3 previous_pos = this->camera->get_position();
-    if (glfwGetKey(win,GLFW_KEY_W)==GLFW_PRESS) {
-        this->camera->process_keyboard(FORWARD,this->deltaTime); 
-    }
-    if (glfwGetKey(win,GLFW_KEY_S)==GLFW_PRESS) {
-        this->camera->process_keyboard(BACKWARD,this->deltaTime); 
-    }
-    if (glfwGetKey(win,GLFW_KEY_A)==GLFW_PRESS) {
-        this->camera->process_keyboard(LEFT,this->deltaTime); 
-    }
-    if (glfwGetKey(win,GLFW_KEY_D)==GLFW_PRESS) {
-        this->camera->process_keyboard(RIGHT,this->deltaTime); 
-    }
-    //If player runs into wall, prevent them from going through it
-    check_collision(previous_pos,door_open);
+  glm::vec3 previous_pos = camera->get_position();
+  if (glfwGetKey(win,GLFW_KEY_W)==GLFW_PRESS) {
+      camera->process_keyboard(FORWARD,deltaTime); 
   }
+  if (glfwGetKey(win,GLFW_KEY_S)==GLFW_PRESS) {
+      camera->process_keyboard(BACKWARD,deltaTime); 
+  }
+  if (glfwGetKey(win,GLFW_KEY_A)==GLFW_PRESS) {
+      camera->process_keyboard(LEFT,deltaTime); 
+  }
+  if (glfwGetKey(win,GLFW_KEY_D)==GLFW_PRESS) {
+      camera->process_keyboard(RIGHT,deltaTime); 
+  }
+  //If player runs into wall, prevent them from going through it
+  if (!bird_cam_on) check_collision(previous_pos,door_open);
 
   //Toggle flashlight's red lens
-  if (glfwGetKey(win,GLFW_KEY_R)==GLFW_PRESS && !this->spot_light_redLens_flag) {
-      this->spot_light_redLens_flag = true;
-      this->spot_light_redLens = !this->spot_light_redLens;
+  if (glfwGetKey(win,GLFW_KEY_R)==GLFW_PRESS && !spot_light_redLens_flag) {
+      spot_light_redLens_flag = true;
+      spot_light_redLens = !spot_light_redLens;
       if (spot_light_redLens) {
-        this->spot_light_ambient = glm::vec3(0.2f,0.0f,0.0f);
-        this->spot_light_diffuse = glm::vec3(1.0f,0.0f,0.0f);
-        this->spot_light_specular = glm::vec3(1.0f,0.0f,0.0f);
+        spot_light_ambient = glm::vec3(0.2f,0.0f,0.0f);
+        spot_light_diffuse = glm::vec3(1.0f,0.0f,0.0f);
+        spot_light_specular = glm::vec3(1.0f,0.0f,0.0f);
       }
       else {
-        this->spot_light_ambient = glm::vec3(0.1f,0.1f,0.1f);
-        this->spot_light_diffuse = glm::vec3(0.8f,0.8f,0.8f);
-        this->spot_light_specular = glm::vec3(1.0f,1.0f,1.0f);
+        spot_light_ambient = glm::vec3(0.1f,0.1f,0.1f);
+        spot_light_diffuse = glm::vec3(0.8f,0.8f,0.8f);
+        spot_light_specular = glm::vec3(1.0f,1.0f,1.0f);
       }
   }
   if (glfwGetKey(win,GLFW_KEY_R)==GLFW_RELEASE) {
-     this->spot_light_redLens_flag = false;
+     spot_light_redLens_flag = false;
   }
 
   //Toggle spot light on and off
-  if (glfwGetKey(win,GLFW_KEY_F)==GLFW_PRESS && !this->spot_light_on_flag) {
-    this->spot_light_on_flag = true;
-    this->spot_light_on = !this->spot_light_on;
+  if (glfwGetKey(win,GLFW_KEY_F)==GLFW_PRESS && !spot_light_on_flag) {
+    spot_light_on_flag = true;
+    spot_light_on = !spot_light_on;
   }
   if (glfwGetKey(win,GLFW_KEY_F)==GLFW_RELEASE) {
-    this->spot_light_on_flag = false;
-    this->spot_light_diffuse = glm::vec3(0.8f,0.8f,0.8f);
+    spot_light_on_flag = false;
+    spot_light_diffuse = glm::vec3(0.8f,0.8f,0.8f);
   }
 
   //Print player's current position
   if (glfwGetKey(win,GLFW_KEY_P)==GLFW_PRESS && print_flag) {
     //Print current position
-    glm::vec3 pos = this->camera->get_position();
+    glm::vec3 pos = camera->get_position();
     std::cout << "My Position: (" + std::to_string(pos.x);
     std::cout << ", " + std::to_string(pos.y);
     std::cout << ", " + std::to_string(pos.z) + ")" << std::endl;
@@ -131,8 +126,8 @@ bool has_been_seen (std::vector<Shader*>* seen_vec, Shader* shader) {
 
 void World::render_scene (std::map<std::string, Draw_Data> objects,bool plate_pressed,bool nightvisionOn,Shader *optional_shader) {
 
-  glm::vec3 cam_pos = this->camera->get_position();
-  glm::mat4 wv = this->camera->get_view_matrix();
+  glm::vec3 cam_pos = camera->get_position();
+  glm::mat4 wv = camera->get_view_matrix();
   std::vector<Shader*> seen_vec;
 
   //for each structure (including a reference to a shape and its associated shader program)
@@ -150,39 +145,39 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,bool plate_pr
     current_shader->setMat4("view",wv);
     //Point Light
     current_shader->setVec3("point_light.position",point_light_position);
-    current_shader->setVec3("point_light.ambient",0.2f*this->point_light_color);
-    current_shader->setVec3("point_light.diffuse",this->point_light_color);
-    current_shader->setVec3("point_light.specular",this->point_light_color);
+    current_shader->setVec3("point_light.ambient",0.2f*point_light_color);
+    current_shader->setVec3("point_light.diffuse",point_light_color);
+    current_shader->setVec3("point_light.specular",point_light_color);
     current_shader->setFloat("point_light.constant",1.0f);
     current_shader->setFloat("point_light.linear",0.14f);
     current_shader->setFloat("point_light.quadratic",0.07f);
-    current_shader->setBool("point_light.on",this->point_light_on);
+    current_shader->setBool("point_light.on",point_light_on);
     //Spot Light
     current_shader->setVec3("spot_light.position",cam_pos);
-    current_shader->setVec3("spot_light.direction",this->camera->get_front());
+    current_shader->setVec3("spot_light.direction",camera->get_front());
     current_shader->setFloat("spot_light.cutOff",glm::cos(glm::radians(12.5f)));
     current_shader->setFloat("spot_light.outerCutOff",glm::cos(glm::radians(17.5f)));
-    current_shader->setVec3("spot_light.ambient",this->spot_light_ambient);
-    current_shader->setVec3("spot_light.diffuse",this->spot_light_diffuse);
-    current_shader->setVec3("spot_light.specular",this->spot_light_specular);
+    current_shader->setVec3("spot_light.ambient",spot_light_ambient);
+    current_shader->setVec3("spot_light.diffuse",spot_light_diffuse);
+    current_shader->setVec3("spot_light.specular",spot_light_specular);
     current_shader->setFloat("spot_light.constant",1.0f);
     current_shader->setFloat("spot_light.linear",0.09f);
     current_shader->setFloat("spot_light.quadratic",0.032f);
-    current_shader->setBool("spot_light.on",this->spot_light_on);
+    current_shader->setBool("spot_light.on",spot_light_on);
     //Directional Light
-    current_shader->setVec3("dir_light.direction",this->dir_light_direction);
-    current_shader->setVec3("dir_light.ambient",0.2f*this->dir_light_color);
-    current_shader->setVec3("dir_light.diffuse",this->dir_light_color);
-    current_shader->setVec3("dir_light.specular",this->dir_light_color);
-    current_shader->setBool("dir_light.on",(this->dir_light_on || plate_pressed || nightvisionOn));
+    current_shader->setVec3("dir_light.direction",dir_light_direction);
+    current_shader->setVec3("dir_light.ambient",0.2f*dir_light_color);
+    current_shader->setVec3("dir_light.diffuse",dir_light_color);
+    current_shader->setVec3("dir_light.specular",dir_light_color);
+    current_shader->setBool("dir_light.on",(dir_light_on || plate_pressed || nightvisionOn));
     current_shader->setFloat("time",glfwGetTime());
   }
 
   if (optional_shader != NULL) {
     //Create light's point of view
     glm::mat4 lightProjection = glm::ortho(-10.0f,10.0f,-10.0f,10.0f,1.0f,20.0f);
-    glm::vec3 light_pos = glm::vec3(this->point_light_position);
-    glm::vec3 front = this->camera->get_front();
+    glm::vec3 light_pos = glm::vec3(point_light_position);
+    glm::vec3 front = camera->get_front();
     glm::mat4 lightView = glm::lookAt(light_pos,front*10.0f,glm::vec3(0.0f,1.0f,0.0f));
     glm::mat4 lightSpaceMatrix = lightProjection * lightView; 
     //Set depthShader's point of view
@@ -203,7 +198,7 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,bool plate_pr
   worldFloor_model = glm::scale(worldFloor_model,glm::vec3(100.0f,100.0f,100.0f));
   worldFloor_model = glm::rotate(worldFloor_model,glm::radians(-90.0f),glm::vec3(1.0,0.0,0.0));
   worldFloor_shader->setMat4("model",worldFloor_model);
-  glBindTexture(GL_TEXTURE_2D,this->floor_texture);
+  glBindTexture(GL_TEXTURE_2D,floor_texture);
   worldFloor->draw(worldFloor_shader->ID);
 
   //Draw officeFloor
@@ -271,34 +266,34 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,bool plate_pr
 }
 
 void World::check_collision(glm::vec3 previous_pos,bool door_open) {
-  glm::vec3 cur_pos = this->camera->get_position();
+  glm::vec3 cur_pos = camera->get_position();
   int x = cur_pos.x;
   int z = cur_pos.z;
   float ref1 = 4.9f;
   float ref2 = 5.1f;
   if (x > ref1 && x < ref2 && z > -ref2 && z < ref2) { //front wall
-    if (z < 2.5f || (z >= 2.5f && !door_open)) this->camera->set_position(previous_pos);
+    if (z < 2.5f || (z >= 2.5f && !door_open)) camera->set_position(previous_pos);
   }
   if (x > (ref1-5.0f) && x < (ref2-5.0f) && z > -2.5f && z < 2.5f) { //middle-z wall
-    this->camera->set_position(previous_pos);
+    camera->set_position(previous_pos);
   }
   if (x < -ref1 && x > -ref2 && z > -ref2 && z < ref2) { //back wall
-    this->camera->set_position(previous_pos);
+    camera->set_position(previous_pos);
   }
   if (x > -ref2 && x < ref2 && z > ref1 && z < ref2) { //left wall
-    this->camera->set_position(previous_pos);
+    camera->set_position(previous_pos);
   }
   if (x > -2.5f && x < ref2 && z > (ref1-5.0f) && z < (ref2-5.0f)) { //middle-x wall
-    this->camera->set_position(previous_pos);
+    camera->set_position(previous_pos);
   }
   if (x > -ref2 && x < ref2 && z < -ref1 && z > -ref2) { //right wall
-    this->camera->set_position(previous_pos);
+    camera->set_position(previous_pos);
   }
 }
 
 void World::render_skybox(Shader * shader, Shape shape, unsigned int texture) {
   shader->use();
-  glm::mat4 temp_view = glm::mat4(glm::mat3(this->camera->get_view_matrix())); 
+  glm::mat4 temp_view = glm::mat4(glm::mat3(camera->get_view_matrix())); 
   shader->setMat4("view",temp_view);
   glDepthFunc(GL_EQUAL);
   glBindTexture(GL_TEXTURE_CUBE_MAP,texture);

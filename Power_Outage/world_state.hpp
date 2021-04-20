@@ -17,7 +17,7 @@ class World {
   public:
     //Create the world state using provided window dimensions.
     World(int width, int height);
-    void process_input(GLFWwindow* win, Camera camera1, Camera camera2,bool door_open);
+    void process_input(GLFWwindow* win,bool door_open);
     void render_scene (std::map<std::string, Draw_Data> objects, bool plate_pressed,bool nightvisionOn,Shader *optional_shader = NULL);
     void check_collision(glm::vec3 previous_pos,bool door_open);
     void render_headsUp_display(Shader * fill_program, Shader font_program, Shape heads_up,
@@ -51,6 +51,10 @@ class World {
     glm::vec3 dir_light_direction = glm::vec3(0.0,-1.0,0.0);
     glm::vec3 dir_light_color = glm::vec3(0.4f,0.4f,0.4f);
 
+    //Singular key press booleans
+    bool print_flag = true;
+    bool spawn_pressed = false;
+
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
 
@@ -67,9 +71,10 @@ class World {
 
     //Camera
     bool cameraView_key_pressed = false;
-    bool camera2_on = false;
+    bool bird_cam_on = false;
+    glm::vec3 bird_cam_pos = glm::vec3(-0.5f,18.0f,1.0f);
+    glm::vec3 saved_player_pos = glm::vec3(10.0f,-3.0f,-3.0f);
     Camera* camera;
-    Camera* temp_camera; //used to facilitate camera toggling
 };
 
 #endif //WORLD_STATE_HPP

@@ -1,9 +1,10 @@
 #ifndef TEXT_DISPLAY_HPP
 #define TEXT_DISPLAY_HPP
 
+#include <glad/glad.h> //GLAD must be BEFORE GLFW
+#include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include "world_state.hpp"
 #include "Shader.hpp"
 #include "shape.hpp"
 #include "Font.hpp"
@@ -23,8 +24,12 @@ class Text_Display {
   public:
     Text_Display(float alpha_value,Display_Data data);
     float get_alpha_value();
+    void process_input(GLFWwindow* win);
     void render_player_coordinates(glm::vec3 camPos);
+    void render_fire();
     Shape rect_player_coordinates;
+    Shape rect_fire;
+    bool fire_flag = true;
 };
 
 #endif //TEXT_DISPLAY_HPP

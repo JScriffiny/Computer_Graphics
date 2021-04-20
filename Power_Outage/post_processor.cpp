@@ -17,81 +17,81 @@ Post_Processor::Post_Processor(int post_process_selection,bool post_process_flag
     this->nightvision_on = nightvision_on;
 }
 
-void Post_Processor::apply_post_processing(Shader * shader, unsigned int texture) {
-    set_texture_rectangle(&(this->post_rect),glm::vec3(-1.0f,-1.0f,0.0f),2.0f,2.0f,false,false,1.0f);
+void Post_Processor::render_post_processing(Shader * shader, unsigned int texture) {
+    set_texture_rectangle(&post_rect,glm::vec3(-1.0f,-1.0f,0.0f),2.0f,2.0f,false,false,1.0f);
     //Unbind framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f); 
     shader->use();
     glBindTexture(GL_TEXTURE_2D, texture);
     glDisable(GL_DEPTH_TEST);
-    shader->setInt("post_process_selection", this->post_process_selection);
-    this->post_rect.draw(shader->ID);
+    shader->setInt("post_process_selection", post_process_selection);
+    post_rect.draw(shader->ID);
     glEnable(GL_DEPTH_TEST);
 }
 
-void Post_Processor::post_process_input(GLFWwindow* win) {
+void Post_Processor::process_input(GLFWwindow* win) {
   //Normal Display
-  if (glfwGetKey(win,GLFW_KEY_1) == GLFW_PRESS && this->post_process_flag) {
-    this->post_process_selection = 1;
-    this->nightvision_on = false;
-    this->post_process_flag = false;
+  if (glfwGetKey(win,GLFW_KEY_1) == GLFW_PRESS && post_process_flag) {
+    post_process_selection = 1;
+    nightvision_on = false;
+    post_process_flag = false;
   }
   if (glfwGetKey(win,GLFW_KEY_1) == GLFW_RELEASE) {
-    this->post_process_flag = true;
+    post_process_flag = true;
   }
   //Night Vision
-  if (glfwGetKey(win,GLFW_KEY_2) == GLFW_PRESS && this->post_process_flag) {
-    this->post_process_selection = 2;
-    this->nightvision_on = true;
-    this->post_process_flag = false;
+  if (glfwGetKey(win,GLFW_KEY_2) == GLFW_PRESS && post_process_flag) {
+    post_process_selection = 2;
+    nightvision_on = true;
+    post_process_flag = false;
   }
   if (glfwGetKey(win,GLFW_KEY_2) == GLFW_RELEASE) {
-    this->post_process_flag = true;
+    post_process_flag = true;
   }
   //Grayscale
-  if (glfwGetKey(win,GLFW_KEY_3) == GLFW_PRESS && this->post_process_flag) {
-    this->post_process_selection = 3;
-    this->nightvision_on = false;
-    this->post_process_flag = false;
+  if (glfwGetKey(win,GLFW_KEY_3) == GLFW_PRESS && post_process_flag) {
+    post_process_selection = 3;
+    nightvision_on = false;
+    post_process_flag = false;
   }
   if (glfwGetKey(win,GLFW_KEY_3) == GLFW_RELEASE) {
-    this->post_process_flag = true;
+    post_process_flag = true;
   }
   //Inverse Color
-  if (glfwGetKey(win,GLFW_KEY_4) == GLFW_PRESS && this->post_process_flag) {
-    this->post_process_selection = 4;
-    this->nightvision_on = false;
-    this->post_process_flag = false;
+  if (glfwGetKey(win,GLFW_KEY_4) == GLFW_PRESS && post_process_flag) {
+    post_process_selection = 4;
+    nightvision_on = false;
+    post_process_flag = false;
   }
   if (glfwGetKey(win,GLFW_KEY_4) == GLFW_RELEASE) {
     post_process_flag = true;
   }
   //Sharpen
-  if (glfwGetKey(win,GLFW_KEY_5) == GLFW_PRESS && this->post_process_flag) {
-    this->post_process_selection = 5;
-    this->nightvision_on = false;
-    this->post_process_flag = false;
+  if (glfwGetKey(win,GLFW_KEY_5) == GLFW_PRESS && post_process_flag) {
+    post_process_selection = 5;
+    nightvision_on = false;
+    post_process_flag = false;
   }
   if (glfwGetKey(win,GLFW_KEY_5) == GLFW_RELEASE) {
-    this->post_process_flag = true;
+    post_process_flag = true;
   }
   //Blur
-  if (glfwGetKey(win,GLFW_KEY_6) == GLFW_PRESS && this->post_process_flag) {
-    this->post_process_selection = 6;
-    this->nightvision_on = false;
-    this->post_process_flag = false;
+  if (glfwGetKey(win,GLFW_KEY_6) == GLFW_PRESS && post_process_flag) {
+    post_process_selection = 6;
+    nightvision_on = false;
+    post_process_flag = false;
   }
   if (glfwGetKey(win,GLFW_KEY_6) == GLFW_RELEASE) {
-    this->post_process_flag = true;
+    post_process_flag = true;
   }
   //Edge detection
-  if (glfwGetKey(win,GLFW_KEY_7) == GLFW_PRESS && this->post_process_flag) {
-    this->post_process_selection = 7;
-    this->nightvision_on = false;
-    this->post_process_flag = false;
+  if (glfwGetKey(win,GLFW_KEY_7) == GLFW_PRESS && post_process_flag) {
+    post_process_selection = 7;
+    nightvision_on = false;
+    post_process_flag = false;
   }
   if (glfwGetKey(win,GLFW_KEY_7) == GLFW_RELEASE) {
-    this->post_process_flag = true;
+    post_process_flag = true;
   }
 }
