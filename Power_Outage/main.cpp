@@ -16,6 +16,7 @@
 //Constants
 #define WIN_WIDTH 960
 #define WIN_HEIGHT 720
+#define FPS 60.0
 
 //Create the world state object
 World world(WIN_WIDTH,WIN_HEIGHT);
@@ -42,7 +43,7 @@ Camera camera(glm::vec3(10.0f,-3.0f,-3.0f),glm::vec3(0.0f,1.0f,0.0f),115.0f, 0.0
 
 //Function Prototypes
 void mouse_callback (GLFWwindow* win, double xpos, double ypos);
-glm::mat4 getLightPOV();
+void enforceFrameRate(double last_frame_time, double frame_rate); //fights rendering lag
 
 int main() {
   //Initialize the environment
@@ -215,9 +216,9 @@ int main() {
 
   //Framebuffer (Post Processing)
   //Make framebuffer object
-  unsigned int framebuffer;
-  glGenFramebuffers(1, &framebuffer);
-  glBindFramebuffer(GL_FRAMEBUFFER, framebuffer); 
+  unsigned int post_framebuffer;
+  glGenFramebuffers(1, &post_framebuffer);
+  glBindFramebuffer(GL_FRAMEBUFFER, post_framebuffer); 
   //Create and bind a texture
   unsigned int texColorBuffer;
   glGenTextures(1, &texColorBuffer);
@@ -241,10 +242,10 @@ int main() {
 	  std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-  /* //Framebuffer (Shadows)
+  //Framebuffer (Shadows)
   unsigned int depthMapFBO;
   glGenFramebuffers(1, &depthMapFBO);
-  const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024; //2048x2048 for better resolution
+  const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
   //Generate 2D texture to hold depth information
   unsigned int depthMap;
   glGenTextures(1, &depthMap);
@@ -261,9 +262,9 @@ int main() {
   glDrawBuffer(GL_NONE);
   glReadBuffer(GL_NONE);
   //Reset to default
-  glBindFramebuffer(GL_FRAMEBUFFER, 0); */
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-  //Create text display object and fill Text Display Data Struct
+  //Fill Text Display Data Struct and create text display object 
   Display_Data display_data;
   display_data.fill_program = &fill_program;
   display_data.font_program = &font_program;
@@ -290,11 +291,14 @@ int main() {
     world.deltaTime = currentFrame - world.lastFrame;
     world.lastFrame = currentFrame;
 
+    //Fight rendering lag
+    enforceFrameRate(world.lastFrame,FPS);
+
     //Store Camera Position
     glm::vec3 camPos = world.camera->get_position();
 
-    //Bind new framebuffer
-    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+    //Bind post_framebuffer
+    glBindFramebuffer(GL_FRAMEBUFFER, post_framebuffer);
 
     //Set the clear color
     glm::vec4 clr = world.clear_color;
@@ -307,36 +311,35 @@ int main() {
 
     //1. Process Input
     world.process_input(window);
-    post_processor.process_input(window);
     text_display.process_input(window);
+    post_processor.process_input(window);
 
     //2. Render Scene
     /* world.render_scene(draw_map,&depth_program);
-    door.draw(&import_program,door_texture);
-    pressurePlate.draw(&import_program,pressurePlate_texture);
-    render_skybox(&skybox_program,skybox,cubemapTexture);
-
-    glViewport(0,0,WIN_WIDTH,WIN_HEIGHT);
-    glBindFramebuffer(GL_FRAMEBUFFER,0);
-    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);//clear stencil too if needed */
-    //texture_program.use();
-    //texture_program.setMat4("lightSpaceMatrix",getLightPOV());
-
-    world.render_scene(draw_map);
     world.render_skybox(&skybox_program,skybox,cubemapTexture);
-    
-    /****Heads up display must be last so that the semi-transparency works***/
     text_display.render_player_coordinates(camPos);
     text_display.render_fire();
 
+    glViewport(0,0,WIN_WIDTH,WIN_HEIGHT);
+    glBindFramebuffer(GL_FRAMEBUFFER,0);
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);//clear stencil too if needed
+    texture_program.use();
+    texture_program.setMat4("lightSpaceMatrix",world.getLightPOV()); */
+
+    world.render_scene(draw_map);
+    world.render_skybox(&skybox_program,skybox,cubemapTexture);
+    text_display.render_player_coordinates(camPos);
+    text_display.render_fire();
+    text_display.render_effects_list();
+    
     //Post Processing
     post_processor.render_effect(&post_process_program,texColorBuffer);
     
     //3. Poll for events
-    glfwPollEvents(); //checks for events -- mouse/keyboard input
+    glfwPollEvents();
     
     //4. Swap Buffers
-    glfwSwapBuffers(window); //swap the color buffer used to display
+    glfwSwapBuffers(window);
   }
 
   glfwTerminate(); //clean/delete GLFW resources
@@ -359,12 +362,6 @@ void mouse_callback(GLFWwindow* win, double xpos, double ypos) {
   camera.process_mouse_movement(offsetx,offsety);
 }
 
-glm::mat4 getLightPOV() {
-  //Create light's point of view
-  glm::mat4 lightProjection = glm::ortho(-10.0f,10.0f,-10.0f,10.0f,1.0f,20.0f);
-  glm::vec3 light_pos = glm::vec3(world.point_light_position);
-  glm::vec3 front = camera.get_front();
-  glm::mat4 lightView = glm::lookAt(light_pos,front*10.0f,glm::vec3(0.0f,1.0f,0.0f));
-  glm::mat4 lightSpaceMatrix = lightProjection * lightView; 
-  return lightSpaceMatrix;
+void enforceFrameRate(double last_frame_time, double frame_rate) {
+  while (glfwGetTime() >= last_frame_time+(1.0/frame_rate));
 }

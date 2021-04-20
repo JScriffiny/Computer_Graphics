@@ -76,7 +76,7 @@ void Shape::set_EBO (unsigned int* data, int num_indices) {
 //define destructor
 Shape::~Shape() {
   if (this->clear_objs) {
-    std::cout<<"Deleted shape."<<std::endl;
+    //std::cout<<"Deleted shape."<<std::endl;
     glDeleteBuffers(1,&(this->VBO));
     glDeleteVertexArrays(1,&(this->VAO));
   }

@@ -27,9 +27,12 @@ class Text_Display {
     void process_input(GLFWwindow* win);
     void render_player_coordinates(glm::vec3 camPos);
     void render_fire();
+    void render_effects_list();
     Shape rect_player_coordinates;
     Shape rect_fire;
+    Shape rect_effects_list;
     bool fire_flag = true;
+    bool effects_list_flag = true;
 };
 
 #endif //TEXT_DISPLAY_HPP

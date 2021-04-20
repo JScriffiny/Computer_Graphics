@@ -55,7 +55,6 @@ float calc_shadow(vec4 fragPosLightSpace,float bias);
 void main()
 {
   vec4 allLight = calc_point_light()+calc_spot_light()+calc_dir_light();
-  //vec4 allLight = calc_point_light()+calc_dir_light();
   FragColor = allLight*texture(texture_image,texture_coords);
 }
 
@@ -90,6 +89,11 @@ vec4 calc_point_light () {
   diffuse_light  *= attenuation;
   specular_light *= attenuation;
 
+  //Shadow calculation
+  float shadow = calc_shadow(FragPosLightSpace,0.005);
+  vec3 lighting = (ambient_light + (1.0 - shadow) * (diffuse_light + specular_light));
+
+  //return vec4(lighting,1.0);
   return vec4(ambient_light+diffuse_light+specular_light,1.0);
 }
 
@@ -154,6 +158,11 @@ vec4 calc_dir_light() {
   diffuse = diff*dir_light.diffuse;
   specular = spec*dir_light.specular;
 
+  //Shadow calculation
+  float shadow = calc_shadow(FragPosLightSpace,0.005);
+  vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular));
+
+  //return vec4(lighting,1.0);
   return vec4(ambient + diffuse + specular,1.0);
 }
 

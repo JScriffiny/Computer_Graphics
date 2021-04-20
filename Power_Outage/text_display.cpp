@@ -21,8 +21,13 @@ float Text_Display::get_alpha_value() {
 }
 
 void Text_Display::process_input(GLFWwindow* win) {
+  //Fire!
   if (glfwGetKey(win,GLFW_KEY_SPACE) == GLFW_PRESS && fire_flag) fire_flag = false;
   if (glfwGetKey(win,GLFW_KEY_SPACE) == GLFW_RELEASE) fire_flag = true;
+
+  //Effects List
+  if (glfwGetKey(win,GLFW_KEY_E) == GLFW_PRESS && effects_list_flag) effects_list_flag = false;
+  if (glfwGetKey(win,GLFW_KEY_E) == GLFW_RELEASE) effects_list_flag = true;
 }
 
 void Text_Display::render_player_coordinates(glm::vec3 camPos) {
@@ -76,6 +81,43 @@ void Text_Display::render_fire() {
     std::string disp_string = "Fire!";
 
     data.font->draw_text(disp_string,glm::vec2(-0.3,-0.3),*data.font_program);
+    data.font_program->use();
+    data.font_program->setFloat("alpha",alpha_value);
+  }
+}
+
+void Text_Display::render_effects_list() {
+  if (!effects_list_flag) {
+    //Heads-Up Display Rectangle
+    set_basic_rectangle(&rect_effects_list,glm::vec3(-5.0,2.1,0.0),2.3,3.9);
+
+    data.fill_program->use();
+    data.fill_program->setMat4("model",glm::mat4(1.0f));
+    data.fill_program->setMat4("view",glm::mat4(1.0));
+    data.fill_program->setMat4("projection",glm::ortho(-5.0,5.0,-5.0,5.0,-1.0,1.0));
+    data.fill_program->setBool("use_set_color",true);
+    data.fill_program->setVec4("set_color",glm::vec4(0.6f,0.6f,0.6f,0.5f));
+    rect_effects_list.draw(data.fill_program->ID);
+    data.fill_program->setMat4("view",data.view);
+    data.fill_program->setMat4("projection",data.projection);
+    data.fill_program->setBool("use_set_color",false);
+
+    //Display Strings for each post processing effect
+    std::vector<std::string> effects;
+    effects.push_back("1) Default");
+    effects.push_back("2) Night Vision");
+    effects.push_back("3) Grayscale");
+    effects.push_back("4) Inverse Colors");
+    effects.push_back("5) Sharpen");
+    effects.push_back("6) Blur");
+    effects.push_back("7) Edge Detection");
+
+    double y_pos = 4.55;
+    for (int i = 0; i < effects.size(); i++) {
+      data.font->draw_text(effects[i],glm::vec2(-4.9,y_pos),*data.font_program);
+      y_pos -= 0.40;
+    }
+
     data.font_program->use();
     data.font_program->setFloat("alpha",alpha_value);
   }

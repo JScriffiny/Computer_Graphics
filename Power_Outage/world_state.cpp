@@ -100,6 +100,7 @@ void World::process_input (GLFWwindow *win) {
 
   //Print player's current position
   if (glfwGetKey(win,GLFW_KEY_P)==GLFW_PRESS && print_flag) {
+    dir_light_on = !dir_light_on;
     //Print current position
     glm::vec3 pos = camera->get_position();
     std::cout << "My Position: (" + std::to_string(pos.x);
@@ -132,8 +133,10 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
   glm::mat4 wv = camera->get_view_matrix();
   std::vector<Shader*> seen_vec;
 
-  bool special_dir_light_conditions = false;
-  if (pressure_plate->get_plate_status() || post_processor->get_nightvision_status()) special_dir_light_conditions = true;
+  bool special_conditions = false;
+  if (pressure_plate->get_plate_status() || post_processor->get_nightvision_status()) {
+    special_conditions = true;
+  }
 
   //for each structure (including a reference to a shape and its associated shader program)
   //   check to see if the shader has already been set (skip if so)
@@ -174,20 +177,14 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
     current_shader->setVec3("dir_light.ambient",0.2f*dir_light_color);
     current_shader->setVec3("dir_light.diffuse",dir_light_color);
     current_shader->setVec3("dir_light.specular",dir_light_color);
-    current_shader->setBool("dir_light.on",(dir_light_on || special_dir_light_conditions));
+    current_shader->setBool("dir_light.on",(dir_light_on || special_conditions));
     current_shader->setFloat("time",glfwGetTime());
   }
 
+  //Set depthShader's point of view
   if (optional_shader != NULL) {
-    //Create light's point of view
-    glm::mat4 lightProjection = glm::ortho(-10.0f,10.0f,-10.0f,10.0f,1.0f,20.0f);
-    glm::vec3 light_pos = glm::vec3(point_light_position);
-    glm::vec3 front = camera->get_front();
-    glm::mat4 lightView = glm::lookAt(light_pos,front*10.0f,glm::vec3(0.0f,1.0f,0.0f));
-    glm::mat4 lightSpaceMatrix = lightProjection * lightView; 
-    //Set depthShader's point of view
     optional_shader->use();
-    optional_shader->setMat4("lightSpaceMatrix",lightSpaceMatrix);
+    optional_shader->setMat4("lightSpaceMatrix",getLightPOV());
   }
 
   //Draw door
@@ -199,11 +196,10 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
   //Draw worldFloor
   Shape* worldFloor = objects["worldFloor"].shape;
   Shader* worldFloor_shader = objects["worldFloor"].shader;
-  if (optional_shader != NULL) {
-    worldFloor_shader = optional_shader;
-  }
+  //if (optional_shader != NULL) worldFloor_shader = optional_shader;
   worldFloor_shader->use();
   worldFloor_shader->setMat4("transform",glm::mat4(1.0f));
+  worldFloor_shader->setMat4("lightSpaceMatrix",getLightPOV());
   glm::mat4 worldFloor_model(1.0f);
   worldFloor_model = glm::translate(worldFloor_model,glm::vec3(0.0,-4.0,0.0));
   worldFloor_model = glm::scale(worldFloor_model,glm::vec3(100.0f,100.0f,100.0f));
@@ -256,6 +252,7 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
   Shader* cube1_shader = objects["cube1"].shader;
   glm::mat4 cube1_transform(1.0f);
   cube1_transform = glm::translate(cube1_transform,glm::vec3(-1.0f,-3.35f,1.0f));
+  //cube1_transform = glm::translate(cube1_transform,glm::vec3(6.0f,-3.0f,3.75f));
   cube1_transform = glm::scale(cube1_transform,glm::vec3(0.25f,0.25f, 0.25f));
   cube1_shader->use();
   cube1_shader->setMat4("transform",glm::mat4(1.0f));
@@ -274,6 +271,16 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
   cube2_shader->setMat4("model",cube2_transform);
   cube2->use_material(cube2_shader);
   cube2->draw(cube2_shader->ID);
+}
+
+glm::mat4 World::getLightPOV() {
+  glm::mat4 lightProjection = glm::ortho(-10.0f,10.0f,-10.0f,10.0f,1.0f,20.0f);
+  glm::vec3 light_pos = glm::vec3(point_light_position);
+  glm::vec3 front = camera->get_front();
+  //glm::mat4 lightView = glm::lookAt(light_pos,front*10.0f,glm::vec3(0.0f,1.0f,0.0f));
+  glm::mat4 lightView = glm::lookAt(light_pos,glm::vec3(6.0f,-6.0f,3.75f),glm::vec3(0.0f,1.0f,0.0f));
+  glm::mat4 lightSpaceMatrix = lightProjection * lightView; 
+  return lightSpaceMatrix;
 }
 
 void World::check_collision(glm::vec3 previous_pos) {
