@@ -22,12 +22,12 @@ class Text_Display {
     float alpha_value = 0.0f;
     Display_Data data;
   public:
-    Text_Display(float alpha_value,Display_Data data);
+    Text_Display(Display_Data data);
     float get_alpha_value();
     void process_input(GLFWwindow* win);
     void render_player_coordinates(glm::vec3 camPos);
     void render_fire();
-    void render_effects_list();
+    void render_effects_list(int effect_id);
     Shape rect_player_coordinates;
     Shape rect_fire;
     Shape rect_effects_list;

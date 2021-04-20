@@ -11,9 +11,10 @@ class Post_Processor {
     bool nightvision_on = false;
   public:
     Post_Processor(int post_process_selection,bool post_process_flag,bool nightvision_on);
+    int get_selection();
+    bool get_nightvision_status();
     void render_effect(Shader * shader, unsigned int texture);
     void process_input(GLFWwindow* win);
-    bool get_nightvision_status();
     Shape post_rect;
 };
 

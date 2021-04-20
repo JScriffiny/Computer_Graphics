@@ -44,7 +44,7 @@ void World::process_input (GLFWwindow *win) {
   }
 
   //Press backspace to teleport back to spawn
-  if (glfwGetKey(win,GLFW_KEY_BACKSPACE) == GLFW_PRESS && !spawn_pressed) {
+  if (glfwGetKey(win,GLFW_KEY_BACKSPACE) == GLFW_PRESS && !bird_cam_on && !spawn_pressed ) {
     spawn_pressed = true;
     camera->set_position(glm::vec3(10.0f,-3.0f,0.0f));
   }
@@ -98,18 +98,13 @@ void World::process_input (GLFWwindow *win) {
     spot_light_diffuse = glm::vec3(0.8f,0.8f,0.8f);
   }
 
-  //Print player's current position
-  if (glfwGetKey(win,GLFW_KEY_P)==GLFW_PRESS && print_flag) {
+  //Toggle Anything
+  if (glfwGetKey(win,GLFW_KEY_P)==GLFW_PRESS && my_toggle) {
     dir_light_on = !dir_light_on;
-    //Print current position
-    glm::vec3 pos = camera->get_position();
-    std::cout << "My Position: (" + std::to_string(pos.x);
-    std::cout << ", " + std::to_string(pos.y);
-    std::cout << ", " + std::to_string(pos.z) + ")" << std::endl;
-    print_flag = false;
+    my_toggle = false;
   }
   if (glfwGetKey(win,GLFW_KEY_P)==GLFW_RELEASE) {
-    print_flag = true;
+    my_toggle = true;
   }
 
   door->process_input(win,camera->get_position());

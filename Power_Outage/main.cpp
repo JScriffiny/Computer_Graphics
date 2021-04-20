@@ -271,7 +271,7 @@ int main() {
   display_data.projection = projection;
   display_data.view = view;
   display_data.font = &arialFont;
-  Text_Display text_display(0.0f,display_data);
+  Text_Display text_display(display_data);
 
   //font_program shader setup
   font_program.use();
@@ -293,9 +293,6 @@ int main() {
 
     //Fight rendering lag
     enforceFrameRate(world.lastFrame,FPS);
-
-    //Store Camera Position
-    glm::vec3 camPos = world.camera->get_position();
 
     //Bind post_framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, post_framebuffer);
@@ -328,9 +325,9 @@ int main() {
 
     world.render_scene(draw_map);
     world.render_skybox(&skybox_program,skybox,cubemapTexture);
-    text_display.render_player_coordinates(camPos);
+    text_display.render_player_coordinates(world.camera->get_position());
     text_display.render_fire();
-    text_display.render_effects_list();
+    text_display.render_effects_list(post_processor.get_selection());
     
     //Post Processing
     post_processor.render_effect(&post_process_program,texColorBuffer);
@@ -342,7 +339,7 @@ int main() {
     glfwSwapBuffers(window);
   }
 
-  glfwTerminate(); //clean/delete GLFW resources
+  glfwTerminate();
   return 0;
 }
 

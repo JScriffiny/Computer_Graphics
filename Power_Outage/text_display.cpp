@@ -11,8 +11,7 @@
 #include "Font.hpp"
 #include "text_display.hpp"
 
-Text_Display::Text_Display(float alpha_value,Display_Data data) {
-    this->alpha_value = alpha_value;
+Text_Display::Text_Display(Display_Data data) {
     this->data = data;
 }
 
@@ -26,7 +25,9 @@ void Text_Display::process_input(GLFWwindow* win) {
   if (glfwGetKey(win,GLFW_KEY_SPACE) == GLFW_RELEASE) fire_flag = true;
 
   //Effects List
-  if (glfwGetKey(win,GLFW_KEY_E) == GLFW_PRESS && effects_list_flag) effects_list_flag = false;
+  if (glfwGetKey(win,GLFW_KEY_E) == GLFW_PRESS && effects_list_flag) {
+    effects_list_flag = false;
+  }
   if (glfwGetKey(win,GLFW_KEY_E) == GLFW_RELEASE) effects_list_flag = true;
 }
 
@@ -86,10 +87,25 @@ void Text_Display::render_fire() {
   }
 }
 
-void Text_Display::render_effects_list() {
+void Text_Display::render_effects_list(int effect_id) {
   if (!effects_list_flag) {
     //Heads-Up Display Rectangle
     set_basic_rectangle(&rect_effects_list,glm::vec3(-5.0,2.1,0.0),2.3,3.9);
+
+    //Effects Selection Highlight
+    Shape rect_selected;
+    set_basic_rectangle(&rect_selected,glm::vec3(-5.0,4.55-((effect_id-1)*0.40),0.0),2.3,0.40);
+
+    data.fill_program->use();
+    data.fill_program->setMat4("model",glm::mat4(1.0f));
+    data.fill_program->setMat4("view",glm::mat4(1.0));
+    data.fill_program->setMat4("projection",glm::ortho(-5.0,5.0,-5.0,5.0,-1.0,1.0));
+    data.fill_program->setBool("use_set_color",true);
+    data.fill_program->setVec4("set_color",glm::vec4(1.0f,1.0f,0.0f,0.7f));
+    rect_selected.draw(data.fill_program->ID);
+    data.fill_program->setMat4("view",data.view);
+    data.fill_program->setMat4("projection",data.projection);
+    data.fill_program->setBool("use_set_color",false);
 
     data.fill_program->use();
     data.fill_program->setMat4("model",glm::mat4(1.0f));
@@ -101,7 +117,7 @@ void Text_Display::render_effects_list() {
     data.fill_program->setMat4("view",data.view);
     data.fill_program->setMat4("projection",data.projection);
     data.fill_program->setBool("use_set_color",false);
-
+    
     //Display Strings for each post processing effect
     std::vector<std::string> effects;
     effects.push_back("1) Default");

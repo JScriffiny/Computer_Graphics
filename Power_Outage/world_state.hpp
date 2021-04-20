@@ -54,7 +54,7 @@ class World {
     glm::vec3 dir_light_color = glm::vec3(0.4f,0.4f,0.4f);
 
     //Singular key press booleans
-    bool print_flag = true;
+    bool my_toggle = true;
     bool spawn_pressed = false;
 
     float deltaTime = 0.0f;

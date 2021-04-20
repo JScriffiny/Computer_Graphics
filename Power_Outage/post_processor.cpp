@@ -17,6 +17,10 @@ Post_Processor::Post_Processor(int post_process_selection,bool post_process_flag
     this->nightvision_on = nightvision_on;
 }
 
+int Post_Processor::get_selection() {
+  return post_process_selection;
+}
+
 bool Post_Processor::get_nightvision_status() {
   return nightvision_on;
 }
