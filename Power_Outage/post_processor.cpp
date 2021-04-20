@@ -6,6 +6,7 @@
 #include <map>
 #include <vector>
 #include "shape.hpp"
+#include "build_shapes.hpp"
 #include "Shader.hpp"
 #include "post_processor.hpp"
 #include "Font.hpp"
@@ -16,7 +17,8 @@ Post_Processor::Post_Processor(int post_process_selection,bool post_process_flag
     this->nightvision_on = nightvision_on;
 }
 
-void Post_Processor::apply_post_processing(Shader * shader, Shape shape, unsigned int texture) {
+void Post_Processor::apply_post_processing(Shader * shader, unsigned int texture) {
+    set_texture_rectangle(&(this->post_rect),glm::vec3(-1.0f,-1.0f,0.0f),2.0f,2.0f,false,false,1.0f);
     //Unbind framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f); 
@@ -24,7 +26,7 @@ void Post_Processor::apply_post_processing(Shader * shader, Shape shape, unsigne
     glBindTexture(GL_TEXTURE_2D, texture);
     glDisable(GL_DEPTH_TEST);
     shader->setInt("post_process_selection", this->post_process_selection);
-    shape.draw(shader->ID);
+    this->post_rect.draw(shader->ID);
     glEnable(GL_DEPTH_TEST);
 }
 

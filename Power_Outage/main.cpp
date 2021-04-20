@@ -9,6 +9,7 @@
 #include <map>
 #include "world_state.hpp"
 #include "post_processor.hpp"
+#include "text_display.hpp"
 #include "moving_door.hpp"
 #include "moving_plate.hpp"
 
@@ -21,6 +22,9 @@ World world(WIN_WIDTH,WIN_HEIGHT);
 
 //Create post processor object
 Post_Processor post_processor(1,true,false);
+
+//Create font object
+Font arialFont("fonts/ArialBlackLarge.bmp","fonts/ArialBlack.csv",0.3,0.4);
 
 //Materials
 Material pearl{glm::vec3(0.25,0.20725,0.20725),
@@ -38,22 +42,12 @@ Camera camera(glm::vec3(10.0f,-3.0f,-3.0f),glm::vec3(0.0f,1.0f,0.0f),115.0f, 0.0
 //Bird's Eye Camera
 Camera camera_bird(glm::vec3(-0.5f,18.0f,1.0f),glm::vec3(0.0f,-1.0f,0.0f),-90.0f, -85.0f);
 
-//Post Processing Globals
-int post_process_selection = 1;
-bool post_process_flag = true;
-bool nightvision_on = false;
-
 //Capture the mouse position data on mouse movement
 void mouse_callback (GLFWwindow* win, double xpos, double ypos);
 glm::mat4 getLightPOV();
-void render_headsUp_display(Shader * fill_program, Shader font_program, Shape heads_up,glm::mat4 view,glm::mat4 projection);
 void render_skybox(Shader * shader, Shape shape, unsigned int texture);
 void apply_post_processing(Shader * shader, Shape shape, unsigned int texture);
 void post_process_input(GLFWwindow* win);
-
-//Create fonts
-Font arialFont("fonts/ArialBlackLarge.bmp","fonts/ArialBlack.csv",0.3,0.4);
-float alpha_value = 0.0f;
 
 int main() {
   //Initialize the environment
@@ -67,9 +61,6 @@ int main() {
 
   //The font must be initialized -after- the environment.
   arialFont.initialize();
-  //Heads-Up Display Rectangle
-  Shape heads_up;
-  set_basic_rectangle(&heads_up,glm::vec3(0.8,-5.0,0.0),5.0,0.4);
 
   //Import an objects
   ImportOBJ new_importer;
@@ -124,10 +115,6 @@ int main() {
     "skybox/back.jpg"
   };
   unsigned int cubemapTexture = get_cube_map(faces,false);
-
-  //Post Processing Rectangle
-  Shape post_rect;
-  set_texture_rectangle(&post_rect,glm::vec3(-1.0f,-1.0f,0.0f),2.0f,2.0f,false,false,1.0f);
   
   //Initialize the shader programs
   Shader fill_program("shaders/vertexShader.glsl","shaders/fragmentShader.glsl");
@@ -271,12 +258,21 @@ int main() {
   //Reset to default
   glBindFramebuffer(GL_FRAMEBUFFER, 0); */
 
+  //Create text display object and fill Text Display Data Struct
+  Display_Data display_data;
+  display_data.fill_program = &fill_program;
+  display_data.font_program = &font_program;
+  display_data.projection = projection;
+  display_data.view = view;
+  display_data.font = &arialFont;
+  Text_Display text_display(0.0f,display_data);
+
   //font_program shader setup
   font_program.use();
   font_program.setMat4("view",glm::mat4(1.0));
   font_program.setMat4("projection", glm::ortho(-5.0, 5.0, -5.0, 5.0, -1.0, 1.0));
   font_program.setVec4("transparentColor", glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
-  font_program.setFloat("alpha", alpha_value);
+  font_program.setFloat("alpha", text_display.get_alpha_value());
   font_program.setInt("texture1", 0);
 
   //Cursor setup
@@ -288,6 +284,9 @@ int main() {
     float currentFrame = glfwGetTime();
     world.deltaTime = currentFrame - world.lastFrame;
     world.lastFrame = currentFrame;
+
+    //Store Camera Position
+    glm::vec3 camPos = world.camera->get_position();
 
     //Bind new framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
@@ -303,8 +302,8 @@ int main() {
 
     //1. Process Input
     world.process_input(window, camera, camera_bird,door.get_door_status());
-    door.process_input(window,world.camera->get_position());
-    pressurePlate.process_input(window,world.camera->get_position());
+    door.process_input(window,camPos);
+    pressurePlate.process_input(window,camPos);
     //post_process_input(window);
     post_processor.post_process_input(window);
 
@@ -326,12 +325,10 @@ int main() {
     world.render_skybox(&skybox_program,skybox,cubemapTexture);
     
     /****Heads up display must be last so that the semi-transparency works***/
-    /* char my_char[2] = "+";
-    arialFont.draw_char(my_char[0],glm::vec2(-0.2,0.0),font_program); */
-    world.render_headsUp_display(&fill_program,font_program,heads_up,view,projection,alpha_value,arialFont);
+    text_display.render_player_coordinates(camPos);
 
     //Post Processing
-    post_processor.apply_post_processing(&post_process_program,post_rect,texColorBuffer);
+    post_processor.apply_post_processing(&post_process_program,texColorBuffer);
     
     //3. Poll for events
     glfwPollEvents(); //checks for events -- mouse/keyboard input

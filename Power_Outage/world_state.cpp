@@ -23,7 +23,7 @@ bool spawn_pressed = false;
 //for processing all input
 void World::process_input (GLFWwindow *win, Camera camera1, Camera camera2, bool door_open) {
   //Press Escape key to exit
-  if (glfwGetKey(win,GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+  if (glfwGetKey(win,GLFW_KEY_0) == GLFW_PRESS) {
     glfwSetWindowShouldClose(win,true);
   }
 
@@ -294,35 +294,6 @@ void World::check_collision(glm::vec3 previous_pos,bool door_open) {
   if (x > -ref2 && x < ref2 && z < -ref1 && z > -ref2) { //right wall
     this->camera->set_position(previous_pos);
   }
-}
-
-void World::render_headsUp_display(Shader * fill_program, Shader font_program, Shape heads_up,
-                                   glm::mat4 view,glm::mat4 projection,float alpha_value,Font font) {
-  fill_program->use();
-  fill_program->setMat4("model",glm::mat4(1.0f));
-  fill_program->setMat4("view",glm::mat4(1.0));
-  fill_program->setMat4("projection",glm::ortho(-5.0,5.0,-5.0,5.0,-1.0,1.0));
-  fill_program->setBool("use_set_color",true);
-  fill_program->setVec4("set_color",glm::vec4(0.0f,0.0f,0.7f,0.3f));
-  heads_up.draw(fill_program->ID);
-  fill_program->setMat4("view",view);
-  fill_program->setMat4("projection",projection);
-  fill_program->setBool("use_set_color",false);
-
-  glm::vec3 cam_pos = this->camera->get_position();
-  std::string labels[3] = {"X","Y","Z"};
-  std::string disp_string = " Camera: ";
-  for (int k = 0; k < 3; k++) {
-    std::string num_string = std::to_string(cam_pos[k]);
-    num_string = num_string.substr(0,num_string.find(".")+2);
-    if (k == 0) disp_string += "(" + labels[k] + ": " + num_string + ", ";
-    else if (k == 1) disp_string += labels[k] + ": " + num_string + ", ";
-    else disp_string += labels[k] + ": " + num_string + ")";
-  }
-  
-  font.draw_text(disp_string,glm::vec2(0.8,-5.0),font_program);
-  font_program.use();
-  font_program.setFloat("alpha",alpha_value);
 }
 
 void World::render_skybox(Shader * shader, Shape shape, unsigned int texture) {
