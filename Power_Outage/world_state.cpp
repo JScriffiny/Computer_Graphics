@@ -17,7 +17,7 @@ World::World(int width, int height) {
 }
 
 //for processing all input
-void World::process_input (GLFWwindow *win, bool door_open) {
+void World::process_input (GLFWwindow *win) {
   //Press Escape key to exit
   if (glfwGetKey(win,GLFW_KEY_ESCAPE) == GLFW_PRESS) {
     glfwSetWindowShouldClose(win,true);
@@ -67,7 +67,7 @@ void World::process_input (GLFWwindow *win, bool door_open) {
       camera->process_keyboard(RIGHT,deltaTime); 
   }
   //If player runs into wall, prevent them from going through it
-  if (!bird_cam_on) check_collision(previous_pos,door_open);
+  if (!bird_cam_on) check_collision(previous_pos);
 
   //Toggle flashlight's red lens
   if (glfwGetKey(win,GLFW_KEY_R)==GLFW_PRESS && !spot_light_redLens_flag) {
@@ -111,6 +111,8 @@ void World::process_input (GLFWwindow *win, bool door_open) {
     print_flag = true;
   }
 
+  door->process_input(win,camera->get_position());
+  pressure_plate->process_input(win,camera->get_position());
 }
 
 bool has_been_seen (std::vector<Shader*>* seen_vec, Shader* shader) {
@@ -124,11 +126,14 @@ bool has_been_seen (std::vector<Shader*>* seen_vec, Shader* shader) {
   return seen;
 }
 
-void World::render_scene (std::map<std::string, Draw_Data> objects,bool plate_pressed,bool nightvisionOn,Shader *optional_shader) {
+void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optional_shader) {
 
   glm::vec3 cam_pos = camera->get_position();
   glm::mat4 wv = camera->get_view_matrix();
   std::vector<Shader*> seen_vec;
+
+  bool special_dir_light_conditions = false;
+  if (pressure_plate->get_plate_status() || post_processor->get_nightvision_status()) special_dir_light_conditions = true;
 
   //for each structure (including a reference to a shape and its associated shader program)
   //   check to see if the shader has already been set (skip if so)
@@ -169,7 +174,7 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,bool plate_pr
     current_shader->setVec3("dir_light.ambient",0.2f*dir_light_color);
     current_shader->setVec3("dir_light.diffuse",dir_light_color);
     current_shader->setVec3("dir_light.specular",dir_light_color);
-    current_shader->setBool("dir_light.on",(dir_light_on || plate_pressed || nightvisionOn));
+    current_shader->setBool("dir_light.on",(dir_light_on || special_dir_light_conditions));
     current_shader->setFloat("time",glfwGetTime());
   }
 
@@ -184,6 +189,12 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,bool plate_pr
     optional_shader->use();
     optional_shader->setMat4("lightSpaceMatrix",lightSpaceMatrix);
   }
+
+  //Draw door
+  door->draw();
+
+  //Draw pressure plate
+  pressure_plate->draw();
 
   //Draw worldFloor
   Shape* worldFloor = objects["worldFloor"].shape;
@@ -265,14 +276,14 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,bool plate_pr
   cube2->draw(cube2_shader->ID);
 }
 
-void World::check_collision(glm::vec3 previous_pos,bool door_open) {
+void World::check_collision(glm::vec3 previous_pos) {
   glm::vec3 cur_pos = camera->get_position();
   int x = cur_pos.x;
   int z = cur_pos.z;
   float ref1 = 4.9f;
   float ref2 = 5.1f;
   if (x > ref1 && x < ref2 && z > -ref2 && z < ref2) { //front wall
-    if (z < 2.5f || (z >= 2.5f && !door_open)) camera->set_position(previous_pos);
+    if (z < 2.5f || (z >= 2.5f && !door->get_door_status())) camera->set_position(previous_pos);
   }
   if (x > (ref1-5.0f) && x < (ref2-5.0f) && z > -2.5f && z < 2.5f) { //middle-z wall
     camera->set_position(previous_pos);

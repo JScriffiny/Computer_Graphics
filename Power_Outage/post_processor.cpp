@@ -17,7 +17,11 @@ Post_Processor::Post_Processor(int post_process_selection,bool post_process_flag
     this->nightvision_on = nightvision_on;
 }
 
-void Post_Processor::render_post_processing(Shader * shader, unsigned int texture) {
+bool Post_Processor::get_nightvision_status() {
+  return nightvision_on;
+}
+
+void Post_Processor::render_effect(Shader * shader, unsigned int texture) {
     set_texture_rectangle(&post_rect,glm::vec3(-1.0f,-1.0f,0.0f),2.0f,2.0f,false,false,1.0f);
     //Unbind framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0);

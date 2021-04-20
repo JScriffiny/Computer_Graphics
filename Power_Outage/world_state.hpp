@@ -6,6 +6,7 @@
 #include "Shader.hpp"
 #include "moving_door.hpp"
 #include "moving_plate.hpp"
+#include "post_processor.hpp"
 
 struct Draw_Data {
   Shape* shape;
@@ -17,9 +18,9 @@ class World {
   public:
     //Create the world state using provided window dimensions.
     World(int width, int height);
-    void process_input(GLFWwindow* win,bool door_open);
-    void render_scene (std::map<std::string, Draw_Data> objects, bool plate_pressed,bool nightvisionOn,Shader *optional_shader = NULL);
-    void check_collision(glm::vec3 previous_pos,bool door_open);
+    void process_input(GLFWwindow* win);
+    void render_scene (std::map<std::string, Draw_Data> objects,Shader *optional_shader = NULL);
+    void check_collision(glm::vec3 previous_pos);
     void render_headsUp_display(Shader * fill_program, Shader font_program, Shape heads_up,
                                 glm::mat4 view,glm::mat4 projection,float alpha_value,Font font);
     void render_skybox(Shader * shader, Shape shape, unsigned int texture);
@@ -75,6 +76,15 @@ class World {
     glm::vec3 bird_cam_pos = glm::vec3(-0.5f,18.0f,1.0f);
     glm::vec3 saved_player_pos = glm::vec3(10.0f,-3.0f,-3.0f);
     Camera* camera;
+
+    //Post Processor
+    Post_Processor* post_processor;
+
+    //Pressure Plate
+    MovingPlate* pressure_plate;
+
+    //Door
+    MovingDoor* door;
 };
 
 #endif //WORLD_STATE_HPP

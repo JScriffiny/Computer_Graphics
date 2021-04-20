@@ -23,16 +23,17 @@ class MovingDoor: public Shape {
         glm::vec3 original_position;
         //door status
         bool is_open;
-
+        //door texture
+        unsigned int texture;
+        //shader program
+        Shader* shader_program;
     public:
-        //Constructor
         MovingDoor(Shape_Struct s, glm::vec3 scale, glm::vec3 pos, float orient);
-        //process input
         void process_input(GLFWwindow *win, glm::vec3 camera_pos);
-        //render object
-        void draw(Shader *shader_program, unsigned int texture);
-        //get door status
+        void draw();
         bool get_door_status();
+        void set_texture(unsigned int texture);
+        void set_shader(Shader* shader_program);
 };
 
 #endif //MOVING_DOOR_HPP

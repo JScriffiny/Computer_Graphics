@@ -40,12 +40,9 @@ Material silver{glm::vec3(0.19225,0.19225,0.19225),
 //Create camera object
 Camera camera(glm::vec3(10.0f,-3.0f,-3.0f),glm::vec3(0.0f,1.0f,0.0f),115.0f, 0.0f);
 
-//Capture the mouse position data on mouse movement
+//Function Prototypes
 void mouse_callback (GLFWwindow* win, double xpos, double ypos);
 glm::mat4 getLightPOV();
-void render_skybox(Shader * shader, Shape shape, unsigned int texture);
-void apply_post_processing(Shader * shader, Shape shape, unsigned int texture);
-void post_process_input(GLFWwindow* win);
 
 int main() {
   //Initialize the environment
@@ -56,6 +53,9 @@ int main() {
 
   //Initialize world camera
   world.camera = &camera;
+
+  //Initialize post processor
+  world.post_processor = &post_processor;
 
   //The font must be initialized -after- the environment.
   arialFont.initialize();
@@ -85,14 +85,14 @@ int main() {
   cube2.set_material(pearl);
 
   //Pressure Plate
-  MovingPlate pressurePlate(new_importer.loadFiles("models/pressurePlate"),
+  MovingPlate pressure_plate(new_importer.loadFiles("models/pressurePlate"),
                             glm::vec3(0.5,0.5,0.5),glm::vec3(1.2,-3.99,-0.8),0.0f);
-  unsigned int pressurePlate_texture = new_importer.getTexture();
+  pressure_plate.set_texture(new_importer.getTexture());
   
   //Door
   MovingDoor door(new_importer.loadFiles("models/door"),
                   glm::vec3(0.5,0.5,0.5),glm::vec3(5.0,-3.99,3.75),0.0f);
-  unsigned int door_texture = new_importer.getTexture();
+  door.set_texture(new_importer.getTexture());
   
   //Brick floor
   Shape worldFloor;
@@ -147,6 +147,13 @@ int main() {
   draw_map["cube1"].shader = &fill_program;
   draw_map["cube2"].shape = &cube2;
   draw_map["cube2"].shader = &fill_program;
+
+  //Set shaders for moving objects
+  pressure_plate.set_shader(&import_program);
+  door.set_shader(&import_program);
+  //Initialize world plate and door
+  world.pressure_plate = &pressure_plate;
+  world.door = &door;
   
   //Initialize the shaders.
   std::vector<Shader*> shaders = {&fill_program,&outline_program,&texture_program,
@@ -299,14 +306,12 @@ int main() {
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
     //1. Process Input
-    world.process_input(window,door.get_door_status());
-    door.process_input(window,camPos);
-    pressurePlate.process_input(window,camPos);
+    world.process_input(window);
     post_processor.process_input(window);
     text_display.process_input(window);
 
     //2. Render Scene
-    /* world.render_scene(draw_map,pressurePlate.get_plate_status(),&depth_program);
+    /* world.render_scene(draw_map,&depth_program);
     door.draw(&import_program,door_texture);
     pressurePlate.draw(&import_program,pressurePlate_texture);
     render_skybox(&skybox_program,skybox,cubemapTexture);
@@ -317,9 +322,7 @@ int main() {
     //texture_program.use();
     //texture_program.setMat4("lightSpaceMatrix",getLightPOV());
 
-    world.render_scene(draw_map,pressurePlate.get_plate_status(),post_processor.nightvision_on);
-    door.draw(&import_program,door_texture);
-    pressurePlate.draw(&import_program,pressurePlate_texture);
+    world.render_scene(draw_map);
     world.render_skybox(&skybox_program,skybox,cubemapTexture);
     
     /****Heads up display must be last so that the semi-transparency works***/
@@ -327,7 +330,7 @@ int main() {
     text_display.render_fire();
 
     //Post Processing
-    post_processor.render_post_processing(&post_process_program,texColorBuffer);
+    post_processor.render_effect(&post_process_program,texColorBuffer);
     
     //3. Poll for events
     glfwPollEvents(); //checks for events -- mouse/keyboard input
@@ -357,10 +360,11 @@ void mouse_callback(GLFWwindow* win, double xpos, double ypos) {
 }
 
 glm::mat4 getLightPOV() {
+  //Create light's point of view
   glm::mat4 lightProjection = glm::ortho(-10.0f,10.0f,-10.0f,10.0f,1.0f,20.0f);
   glm::vec3 light_pos = glm::vec3(world.point_light_position);
-  glm::vec3 front = world.camera->get_front();
+  glm::vec3 front = camera.get_front();
   glm::mat4 lightView = glm::lookAt(light_pos,front*10.0f,glm::vec3(0.0f,1.0f,0.0f));
-  glm::mat4 lightSpaceMatrix = lightProjection * lightView;
+  glm::mat4 lightSpaceMatrix = lightProjection * lightView; 
   return lightSpaceMatrix;
 }

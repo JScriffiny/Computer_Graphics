@@ -14,14 +14,22 @@ MovingPlate::MovingPlate(Shape_Struct s,glm::vec3 scale,glm::vec3 pos,float orie
     this->status_flag = false;
 }
 
-void MovingPlate::draw(Shader *shader_program, unsigned int plate_texture) {
+void MovingPlate::set_texture(unsigned int texture) {
+    this->texture = texture;
+}
+
+void MovingPlate::set_shader(Shader* shader_program) {
+    this->shader_program = shader_program;
+}
+
+void MovingPlate::draw() {
     shader_program->use();
     glm::mat4 shape_trans(1.0f);
     shape_trans = glm::translate(shape_trans, this->position);
     shape_trans = glm::rotate(shape_trans,glm::radians(this->rotation),glm::vec3(0.0,1.0,0.0));
     shape_trans = glm::scale(shape_trans,this->scale_vec);
     shape_trans = glm::rotate(shape_trans,glm::radians(this->orientation),glm::vec3(0.0,1.0,0.0));
-    glBindTexture(GL_TEXTURE_2D,plate_texture);
+    glBindTexture(GL_TEXTURE_2D,texture);
     shader_program->setMat4("model",shape_trans);
     shader_program->setBool("use_texture",true);
     Shape::draw(shader_program->ID);

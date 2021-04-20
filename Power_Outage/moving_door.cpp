@@ -16,7 +16,15 @@ MovingDoor::MovingDoor(Shape_Struct s,glm::vec3 scale,glm::vec3 pos,float orient
     this->is_open = false;
 }
 
-void MovingDoor::draw(Shader *shader_program, unsigned int texture) {
+void MovingDoor::set_texture(unsigned int texture) {
+    this->texture = texture;
+}
+
+void MovingDoor::set_shader(Shader* shader_program) {
+    this->shader_program = shader_program;
+}
+
+void MovingDoor::draw() {
     shader_program->use();
     glm::mat4 shape_trans(1.0f);
     shape_trans = glm::translate(shape_trans, this->position);
