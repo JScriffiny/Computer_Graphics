@@ -20,6 +20,7 @@ class World {
     World(int width, int height);
     void process_input(GLFWwindow* win);
     void render_scene (std::map<std::string, Draw_Data> objects,Shader *optional_shader = NULL);
+    void render_stencils(Shader* fill_program, Shader* import_program);
     glm::mat4 getLightPOV();
     void check_collision(glm::vec3 previous_pos);
     void render_headsUp_display(Shader * fill_program, Shader font_program, Shape heads_up,

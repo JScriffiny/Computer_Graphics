@@ -24,6 +24,18 @@ void MovingDoor::set_shader(Shader* shader_program) {
     this->shader_program = shader_program;
 }
 
+void MovingDoor::set_scale(glm::vec3 scale_vec) {
+    this->scale_vec = scale_vec;
+}
+
+bool MovingDoor::get_door_status() {
+    return is_open;
+}
+
+glm::vec3 MovingDoor::get_position() {
+    return position;
+}
+
 void MovingDoor::draw() {
     shader_program->use();
     glm::mat4 shape_trans(1.0f);
@@ -60,8 +72,4 @@ void MovingDoor::process_input(GLFWwindow *win, glm::vec3 camera_pos) {
     if (glfwGetKey(win,GLFW_KEY_SPACE)==GLFW_RELEASE) {
         door_press_once = true;
     }
-}
-
-bool MovingDoor::get_door_status() {
-    return this->is_open;
 }

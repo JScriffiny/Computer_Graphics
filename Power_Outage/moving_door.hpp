@@ -19,7 +19,7 @@ class MovingDoor: public Shape {
         glm::vec3 scale_vec;
         //position vector
         glm::vec3 position;
-        //original  position vector
+        //original position vector
         glm::vec3 original_position;
         //door status
         bool is_open;
@@ -32,8 +32,10 @@ class MovingDoor: public Shape {
         void process_input(GLFWwindow *win, glm::vec3 camera_pos);
         void draw();
         bool get_door_status();
+        glm::vec3 get_position();
         void set_texture(unsigned int texture);
         void set_shader(Shader* shader_program);
+        void set_scale(glm::vec3 scale_vec);
 };
 
 #endif //MOVING_DOOR_HPP

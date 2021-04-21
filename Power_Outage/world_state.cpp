@@ -123,6 +123,8 @@ bool has_been_seen (std::vector<Shader*>* seen_vec, Shader* shader) {
 }
 
 void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optional_shader) {
+  //Clear the stencil mask before rendering scene
+  glStencilMask(0x00);
 
   glm::vec3 cam_pos = camera->get_position();
   glm::mat4 wv = camera->get_view_matrix();
@@ -181,12 +183,6 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
     optional_shader->use();
     optional_shader->setMat4("lightSpaceMatrix",getLightPOV());
   }
-
-  //Draw door
-  door->draw();
-
-  //Draw pressure plate
-  pressure_plate->draw();
 
   //Draw worldFloor
   Shape* worldFloor = objects["worldFloor"].shape;
@@ -266,6 +262,56 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
   cube2_shader->setMat4("model",cube2_transform);
   cube2->use_material(cube2_shader);
   cube2->draw(cube2_shader->ID);
+
+  //Stenciled objects section
+  glStencilFunc(GL_ALWAYS,1,0xFF);
+  glStencilMask(0xFF);
+
+  //Draw door
+  door->draw();
+
+  //Draw pressure plate
+  pressure_plate->draw();
+}
+
+void World::render_stencils(Shader* fill_program, Shader* import_program) {
+  float dist_to_door = glm::length(camera->get_position()-door->get_position());
+  if (dist_to_door <= 4.5) {
+    glStencilFunc(GL_NOTEQUAL,1,0xFF);
+    glStencilMask(0x00);
+    glDisable(GL_DEPTH_TEST);
+    door->set_scale(glm::vec3(0.52,0.52,0.52));
+    fill_program->use();
+    fill_program->setBool("use_set_color",true);
+    fill_program->setVec4("set_color",glm::vec4(0.3,0.7,1.0,0.5));
+    door->set_shader(fill_program);
+    door->draw();
+    door->set_shader(import_program);
+    door->set_scale(glm::vec3(0.5,0.5,0.5));
+    fill_program->setBool("use_set_color",false);
+    glStencilMask(0xFF);
+    glStencilFunc(GL_ALWAYS,1,0xFF);
+    glEnable(GL_DEPTH_TEST);
+  }
+
+  float dist_to_plate = glm::length(camera->get_position()-pressure_plate->get_position());
+  if (dist_to_plate <= 3.0) {
+    glStencilFunc(GL_NOTEQUAL,1,0xFF);
+    glStencilMask(0x00);
+    glDisable(GL_DEPTH_TEST);
+    pressure_plate->set_scale(glm::vec3(0.52,0.52,0.52));
+    fill_program->use();
+    fill_program->setBool("use_set_color",true);
+    fill_program->setVec4("set_color",glm::vec4(0.3,0.7,1.0,0.5));
+    pressure_plate->set_shader(fill_program);
+    pressure_plate->draw();
+    pressure_plate->set_shader(import_program);
+    pressure_plate->set_scale(glm::vec3(0.5,0.5,0.5));
+    fill_program->setBool("use_set_color",false);
+    glStencilMask(0xFF);
+    glStencilFunc(GL_ALWAYS,1,0xFF);
+    glEnable(GL_DEPTH_TEST);
+  }
 }
 
 glm::mat4 World::getLightPOV() {

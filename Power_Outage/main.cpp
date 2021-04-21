@@ -284,6 +284,11 @@ int main() {
   //Cursor setup
   glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_DISABLED);
   glfwSetCursorPosCallback(window,mouse_callback);
+
+  //Stencil Testing
+  glEnable(GL_STENCIL_TEST);
+  glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
+  glStencilFunc(GL_NOTEQUAL,1,0xFF);
   
   //glfwWindowShouldClose checks if GLFW has been instructed to close
   while(!glfwWindowShouldClose(window)) {
@@ -304,7 +309,7 @@ int main() {
     /* glViewport(0,0,SHADOW_WIDTH,SHADOW_HEIGHT);
     glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO); */
     //Clear appropriate buffers
-    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
 
     //1. Process Input
     world.process_input(window);
@@ -319,11 +324,12 @@ int main() {
 
     glViewport(0,0,WIN_WIDTH,WIN_HEIGHT);
     glBindFramebuffer(GL_FRAMEBUFFER,0);
-    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);//clear stencil too if needed
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
     texture_program.use();
     texture_program.setMat4("lightSpaceMatrix",world.getLightPOV()); */
 
     world.render_scene(draw_map);
+    world.render_stencils(&fill_program,&import_program);
     world.render_skybox(&skybox_program,skybox,cubemapTexture);
     text_display.render_player_coordinates(world.camera->get_position());
     text_display.render_fire();

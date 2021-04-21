@@ -22,6 +22,18 @@ void MovingPlate::set_shader(Shader* shader_program) {
     this->shader_program = shader_program;
 }
 
+void MovingPlate::set_scale(glm::vec3 scale_vec) {
+    this->scale_vec = scale_vec;
+}
+
+bool MovingPlate::get_plate_status() {
+    return is_pressed;
+}
+
+glm::vec3 MovingPlate::get_position() {
+    return position;
+}
+
 void MovingPlate::draw() {
     shader_program->use();
     glm::mat4 shape_trans(1.0f);
@@ -54,8 +66,4 @@ void MovingPlate::process_input(GLFWwindow *win, glm::vec3 camera_pos) {
     if (!within_range && !status_flag) this->is_pressed = false;    
     if (this->is_pressed) this->position = glm::vec3(this->position.x,-4.03,this->position.z);
     else this->position = this-> original_position;
-}
-
-bool MovingPlate::get_plate_status() {
-    return this->is_pressed;
 }

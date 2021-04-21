@@ -34,8 +34,10 @@ class MovingPlate: public Shape {
         void process_input(GLFWwindow *win, glm::vec3 camera_pos);
         void draw();
         bool get_plate_status();
+        glm::vec3 get_position();
         void set_texture(unsigned int texture);
         void set_shader(Shader* shader_program);
+        void set_scale(glm::vec3 scale_vec);
 };
 
 #endif //MOVING_PLATE_HPP
