@@ -36,6 +36,7 @@ class MovingDoor: public Shape {
         void set_texture(unsigned int texture);
         void set_shader(Shader* shader_program);
         void set_scale(glm::vec3 scale_vec);
+        double range = 4.5;
 };
 
 #endif //MOVING_DOOR_HPP

@@ -26,6 +26,7 @@ void Text_Display::process_input(GLFWwindow* win) {
 
   //Effects List
   if (glfwGetKey(win,GLFW_KEY_E) == GLFW_PRESS && effects_list_flag) {
+    effects_list_activated = !effects_list_activated;
     effects_list_flag = false;
   }
   if (glfwGetKey(win,GLFW_KEY_E) == GLFW_RELEASE) effects_list_flag = true;
@@ -88,7 +89,7 @@ void Text_Display::render_fire() {
 }
 
 void Text_Display::render_effects_list(int effect_id) {
-  if (!effects_list_flag) {
+  if (effects_list_activated) {
     //Heads-Up Display Rectangle
     set_basic_rectangle(&rect_effects_list,glm::vec3(-5.0,2.1,0.0),2.3,3.9);
 

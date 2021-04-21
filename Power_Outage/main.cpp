@@ -10,6 +10,7 @@
 #include "world_state.hpp"
 #include "post_processor.hpp"
 #include "text_display.hpp"
+#include "skybox.hpp"
 #include "moving_door.hpp"
 #include "moving_plate.hpp"
 
@@ -99,21 +100,6 @@ int main() {
   Shape worldFloor;
   world.floor_texture = get_texture("images/bricks.jpg");
   set_texture_rectangle(&worldFloor,glm::vec3(-1.0,-1.0,0.0f),2.0f,2.0f,false,false,50.0f);
-
-  //Skybox shape
-  Shape skybox;
-  set_basic_cube(&skybox);
-
-  //Cube Map
-  std::vector<std::string> faces {
-    "skybox/right.jpg",
-    "skybox/left.jpg",
-    "skybox/top.jpg",
-    "skybox/bottom.jpg",
-    "skybox/front.jpg",
-    "skybox/back.jpg"
-  };
-  unsigned int cubemapTexture = get_cube_map(faces,false);
   
   //Initialize the shader programs
   Shader fill_program("shaders/vertexShader.glsl","shaders/fragmentShader.glsl");
@@ -148,6 +134,9 @@ int main() {
   draw_map["cube1"].shader = &fill_program;
   draw_map["cube2"].shape = &cube2;
   draw_map["cube2"].shader = &fill_program;
+  //Add shaders for stencil program
+  draw_map["stencil_fill"].shader = &fill_program;
+  draw_map["stencil_import"].shader = &import_program;
 
   //Set shaders for moving objects
   pressure_plate.set_shader(&import_program);
@@ -273,6 +262,20 @@ int main() {
   display_data.font = &arialFont;
   Text_Display text_display(display_data);
 
+  //Skybox Setup
+  Shape skybox_cube;
+  set_basic_cube(&skybox_cube);
+  std::vector<std::string> faces {
+    "skybox/right.jpg",
+    "skybox/left.jpg",
+    "skybox/top.jpg",
+    "skybox/bottom.jpg",
+    "skybox/front.jpg",
+    "skybox/back.jpg"
+  };
+  unsigned int cubemapTexture = get_cube_map(faces,false);
+  Skybox skybox(&skybox_program,skybox_cube,cubemapTexture);
+
   //font_program shader setup
   font_program.use();
   font_program.setMat4("view",glm::mat4(1.0));
@@ -329,8 +332,7 @@ int main() {
     texture_program.setMat4("lightSpaceMatrix",world.getLightPOV()); */
 
     world.render_scene(draw_map);
-    world.render_stencils(&fill_program,&import_program);
-    world.render_skybox(&skybox_program,skybox,cubemapTexture);
+    skybox.render(world.camera->get_view_matrix());
     text_display.render_player_coordinates(world.camera->get_position());
     text_display.render_fire();
     text_display.render_effects_list(post_processor.get_selection());

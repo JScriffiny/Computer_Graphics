@@ -52,7 +52,7 @@ void MovingPlate::process_input(GLFWwindow *win, glm::vec3 camera_pos) {
     //Only turn on light if standing on pressure plate
     float dist_to_plate = glm::length(camera_pos-this->position);
     bool within_range = false;
-    if (dist_to_plate < 1.2) within_range = true;
+    if (dist_to_plate < range) within_range = true;
 
     //Step over plate to turn on light; press space to keep it pressed
     if (within_range) {

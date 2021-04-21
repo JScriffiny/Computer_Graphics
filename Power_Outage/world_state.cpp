@@ -44,7 +44,7 @@ void World::process_input (GLFWwindow *win) {
   }
 
   //Press backspace to teleport back to spawn
-  if (glfwGetKey(win,GLFW_KEY_BACKSPACE) == GLFW_PRESS && !bird_cam_on && !spawn_pressed ) {
+  if (glfwGetKey(win,GLFW_KEY_BACKSPACE) == GLFW_PRESS && !bird_cam_on && !spawn_pressed) {
     spawn_pressed = true;
     camera->set_position(glm::vec3(10.0f,-3.0f,0.0f));
   }
@@ -263,7 +263,7 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
   cube2->use_material(cube2_shader);
   cube2->draw(cube2_shader->ID);
 
-  //Stenciled objects section
+  /*** Stenciled Objects Section ***/
   glStencilFunc(GL_ALWAYS,1,0xFF);
   glStencilMask(0xFF);
 
@@ -272,11 +272,13 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
 
   //Draw pressure plate
   pressure_plate->draw();
+
+  render_stencils(objects["stencil_fill"].shader,objects["stencil_import"].shader);
 }
 
 void World::render_stencils(Shader* fill_program, Shader* import_program) {
   float dist_to_door = glm::length(camera->get_position()-door->get_position());
-  if (dist_to_door <= 4.5) {
+  if (dist_to_door <= door->range) {
     glStencilFunc(GL_NOTEQUAL,1,0xFF);
     glStencilMask(0x00);
     glDisable(GL_DEPTH_TEST);
@@ -295,7 +297,7 @@ void World::render_stencils(Shader* fill_program, Shader* import_program) {
   }
 
   float dist_to_plate = glm::length(camera->get_position()-pressure_plate->get_position());
-  if (dist_to_plate <= 3.0) {
+  if (dist_to_plate <= (pressure_plate->range)+0.8) {
     glStencilFunc(GL_NOTEQUAL,1,0xFF);
     glStencilMask(0x00);
     glDisable(GL_DEPTH_TEST);
@@ -348,15 +350,4 @@ void World::check_collision(glm::vec3 previous_pos) {
   if (x > -ref2 && x < ref2 && z < -ref1 && z > -ref2) { //right wall
     camera->set_position(previous_pos);
   }
-}
-
-void World::render_skybox(Shader * shader, Shape shape, unsigned int texture) {
-  shader->use();
-  glm::mat4 temp_view = glm::mat4(glm::mat3(camera->get_view_matrix())); 
-  shader->setMat4("view",temp_view);
-  glDepthFunc(GL_EQUAL);
-  glBindTexture(GL_TEXTURE_CUBE_MAP,texture);
-  glDrawArrays(GL_TRIANGLES, 0, 36);
-  shape.draw(shader->ID);
-  glDepthFunc(GL_LESS);
 }

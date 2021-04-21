@@ -33,6 +33,7 @@ class Text_Display {
     Shape rect_effects_list;
     bool fire_flag = true;
     bool effects_list_flag = true;
+    bool effects_list_activated = false;
 };
 
 #endif //TEXT_DISPLAY_HPP

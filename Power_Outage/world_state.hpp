@@ -23,9 +23,6 @@ class World {
     void render_stencils(Shader* fill_program, Shader* import_program);
     glm::mat4 getLightPOV();
     void check_collision(glm::vec3 previous_pos);
-    void render_headsUp_display(Shader * fill_program, Shader font_program, Shape heads_up,
-                                glm::mat4 view,glm::mat4 projection,float alpha_value,Font font);
-    void render_skybox(Shader * shader, Shape shape, unsigned int texture);
     
     //These are left public for convenience (but depending upon the complexity of your world state, it would 
     //make sense to keep some or all of the data members protected)

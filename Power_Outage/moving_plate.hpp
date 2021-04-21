@@ -38,6 +38,7 @@ class MovingPlate: public Shape {
         void set_texture(unsigned int texture);
         void set_shader(Shader* shader_program);
         void set_scale(glm::vec3 scale_vec);
+        double range = 1.2;
 };
 
 #endif //MOVING_PLATE_HPP

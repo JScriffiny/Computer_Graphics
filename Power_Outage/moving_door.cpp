@@ -54,7 +54,7 @@ void MovingDoor::process_input(GLFWwindow *win, glm::vec3 camera_pos) {
     //Only open door if close enough
     float dist_to_door = glm::length(camera_pos-this->position);
     bool within_range = false;
-    if (dist_to_door < 3.3) within_range = true;
+    if (dist_to_door < range) within_range = true;
 
     //Press space bar to open door
     if (glfwGetKey(win,GLFW_KEY_SPACE)==GLFW_PRESS && within_range && door_press_once) {
