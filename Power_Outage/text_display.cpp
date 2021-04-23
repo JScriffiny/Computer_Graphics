@@ -139,3 +139,28 @@ void Text_Display::render_effects_list(int effect_id) {
     data.font_program->setFloat("alpha",alpha_value);
   }
 }
+
+void Text_Display::render_key_status(bool key_collected) {
+  if (key_collected) {
+    //Heads-Up Display Rectangle
+    set_basic_rectangle(&rect_key_status,glm::vec3(3.2,4.65,0.0),1.8,0.4);
+
+    data.fill_program->use();
+    data.fill_program->setMat4("model",glm::mat4(1.0f));
+    data.fill_program->setMat4("view",glm::mat4(1.0));
+    data.fill_program->setMat4("projection",glm::ortho(-5.0,5.0,-5.0,5.0,-1.0,1.0));
+    data.fill_program->setBool("use_set_color",true);
+    data.fill_program->setVec4("set_color",glm::vec4(0.0f,1.0f,0.0f,0.5f));
+    rect_key_status.draw(data.fill_program->ID);
+    data.fill_program->setMat4("view",data.view);
+    data.fill_program->setMat4("projection",data.projection);
+    data.fill_program->setBool("use_set_color",false);
+
+    //Display String
+    std::string disp_string = "Key Collected!";
+
+    data.font->draw_text(disp_string,glm::vec2(3.2,4.65),*data.font_program);
+    data.font_program->use();
+    data.font_program->setFloat("alpha",alpha_value);
+  }
+}

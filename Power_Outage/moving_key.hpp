@@ -1,5 +1,5 @@
-#ifndef MOVING_DOOR_HPP
-#define MOVING_DOOR_HPP
+#ifndef MOVING_KEY_HPP
+#define MOVING_KEY_HPP
 
 #include <glad/glad.h> //GLAD must be BEFORE GLFW
 #include <GLFW/glfw3.h>
@@ -9,7 +9,7 @@
 #include <vector>
 #include "shape.hpp"
 
-class MovingDoor: public Shape {
+class MovingKey: public Shape {
     protected:
         //rotation about the y-axis
         float rotation;
@@ -19,24 +19,25 @@ class MovingDoor: public Shape {
         glm::vec3 scale_vec;
         //position vector
         glm::vec3 position;
-        //original position vector
-        glm::vec3 original_position;
-        //door status
-        bool is_open;
-        //door texture
+        //plate texture
         unsigned int texture;
         //shader program
         Shader* shader_program;
     public:
-        MovingDoor(Shape_Struct s, glm::vec3 scale, glm::vec3 pos, float orient);
-        void process_input(GLFWwindow *win, glm::vec3 camera_pos,bool key_inserted);
+        MovingKey(Shape_Struct s, glm::vec3 scale, glm::vec3 pos, float orient);
+        void process_input(GLFWwindow *win, glm::vec3 camera_pos);
         void draw();
-        bool get_door_status();
         glm::vec3 get_position();
         void set_texture(unsigned int texture);
         void set_shader(Shader* shader_program);
         void set_scale(glm::vec3 scale_vec);
-        double range = 4.5;
+        float key_range = 2.5f;
+        float keyhole_range = 4.0f;
+        bool first_collect = false;
+        bool collected = false;
+        bool inserted = false;
+        bool collect_flag = true;
+        bool insert_flag = true;
 };
 
-#endif //MOVING_DOOR_HPP
+#endif //MOVING_KEY_HPP

@@ -28,9 +28,11 @@ class Text_Display {
     void render_player_coordinates(glm::vec3 camPos);
     void render_fire();
     void render_effects_list(int effect_id);
+    void render_key_status(bool key_collected);
     Shape rect_player_coordinates;
     Shape rect_fire;
     Shape rect_effects_list;
+    Shape rect_key_status;
     bool fire_flag = true;
     bool effects_list_flag = true;
     bool effects_list_activated = false;

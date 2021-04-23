@@ -6,6 +6,8 @@
 #include "Shader.hpp"
 #include "moving_door.hpp"
 #include "moving_plate.hpp"
+#include "moving_flashlight.hpp"
+#include "moving_key.hpp"
 #include "post_processor.hpp"
 
 struct Draw_Data {
@@ -68,6 +70,8 @@ class World {
     bool first_mouse = true;
     float lastX = height/2.0f;
     float lastY = width/2.0f;
+    float x_offset = 0.0f;
+    float y_offset = 0.0f;
 
     //Camera
     bool cameraView_key_pressed = false;
@@ -84,6 +88,12 @@ class World {
 
     //Door
     MovingDoor* door;
+
+    //Flashlight
+    MovingFlashlight* flashlight;
+
+    //Office Key
+    MovingKey* office_key;
 };
 
 #endif //WORLD_STATE_HPP

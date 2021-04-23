@@ -13,6 +13,8 @@
 #include "skybox.hpp"
 #include "moving_door.hpp"
 #include "moving_plate.hpp"
+#include "moving_flashlight.hpp"
+#include "moving_key.hpp"
 
 //Constants
 #define WIN_WIDTH 960
@@ -79,6 +81,11 @@ int main() {
   Shape furniture(new_furniture);
   unsigned int furniture_texture = new_importer.getTexture();
 
+  //Keyhole
+  Shape_Struct new_keyhole = new_importer.loadFiles("models/keyhole");
+  Shape keyhole(new_keyhole);
+  unsigned int keyhole_texture = new_importer.getTexture();
+
   //Material Cubes
   Shape cube1,cube2;
   set_basic_cube(&cube1);
@@ -95,13 +102,23 @@ int main() {
   MovingDoor door(new_importer.loadFiles("models/door"),
                   glm::vec3(0.5,0.5,0.5),glm::vec3(5.0,-3.99,3.75),0.0f);
   door.set_texture(new_importer.getTexture());
+
+  //Flashlight
+  MovingFlashlight flashlight(new_importer.loadFiles("models/flashlight"),
+                  glm::vec3(0.02,0.02,0.02),glm::vec3(11.0,-3.0,3.0),0.0f,115.0f,0.0f);
+  flashlight.set_texture(new_importer.getTexture());
+
+  //Key
+  MovingKey office_key(new_importer.loadFiles("models/key"),
+                  glm::vec3(0.25,0.25,0.25),glm::vec3(11.0,-3.99,1.0),0.0f);
+  office_key.set_texture(new_importer.getTexture());
   
   //Brick floor
   Shape worldFloor;
   world.floor_texture = get_texture("images/bricks.jpg");
   set_texture_rectangle(&worldFloor,glm::vec3(-1.0,-1.0,0.0f),2.0f,2.0f,false,false,50.0f);
   
-  //Initialize the shader programs
+  //Initialize shader programs
   Shader fill_program("shaders/vertexShader.glsl","shaders/fragmentShader.glsl");
   Shader texture_program("shaders/textureVertexShader.glsl","shaders/textureFragmentShader.glsl");
   Shader outline_program("shaders/vertexShader.glsl","shaders/outlineFragmentShader.glsl");
@@ -111,8 +128,7 @@ int main() {
   Shader skybox_program("shaders/skyboxVertexShader.glsl","shaders/skyboxFragmentShader.glsl");
   Shader post_process_program("shaders/postVertexShader.glsl","shaders/postFragmentShader.glsl");
 
-  //Map structure used to pass objects to render scene function
-  //Draw_Data is a structure that has a shape and a shader
+  //Map structure setup to pass objects to render scene function
   std::map<std::string,Draw_Data> draw_map;
   //Add floor to map
   draw_map["worldFloor"].shape = &worldFloor;
@@ -129,23 +145,31 @@ int main() {
   draw_map["furniture"].shape = &furniture;
   draw_map["furniture"].shader = &import_program;
   draw_map["furniture"].texture = furniture_texture;
+  //Add keyhole to map
+  draw_map["keyhole"].shape = &keyhole;
+  draw_map["keyhole"].shader = &import_program;
+  draw_map["keyhole"].texture = keyhole_texture;
   //Add cubes to map
   draw_map["cube1"].shape = &cube1;
   draw_map["cube1"].shader = &fill_program;
   draw_map["cube2"].shape = &cube2;
   draw_map["cube2"].shader = &fill_program;
-  //Add shaders for stencil program
+  //Add shaders for stencil program to reference
   draw_map["stencil_fill"].shader = &fill_program;
   draw_map["stencil_import"].shader = &import_program;
 
   //Set shaders for moving objects
   pressure_plate.set_shader(&import_program);
   door.set_shader(&import_program);
+  flashlight.set_shader(&import_program);
+  office_key.set_shader(&import_program);
   //Initialize world plate and door
   world.pressure_plate = &pressure_plate;
   world.door = &door;
+  world.flashlight = &flashlight;
+  world.office_key = &office_key;
   
-  //Initialize the shaders.
+  //Shader initialization
   std::vector<Shader*> shaders = {&fill_program,&outline_program,&texture_program,
                                   &import_program,&depth_program,&skybox_program,&post_process_program};
   glm::mat4 identity(1.0f);
@@ -175,6 +199,7 @@ int main() {
     shaders[i]->setFloat("shininess",256);
     //Spot Light
     shaders[i]->setVec3("spot_light.position",world.camera->get_position());
+    //shaders[i]->setVec3("spot_light.position",flashlight.get_position());
     shaders[i]->setVec3("spot_light.direction",world.camera->get_front());
     shaders[i]->setFloat("spot_light.cutOff",glm::cos(glm::radians(12.5f)));
     shaders[i]->setFloat("spot_light.outerCutOff",glm::cos(glm::radians(17.5f)));
@@ -194,6 +219,41 @@ int main() {
     shaders[i]->setFloat("time",glfwGetTime());
   }
 
+  //Text Display setup
+  Display_Data display_data;
+  display_data.fill_program = &fill_program;
+  display_data.font_program = &font_program;
+  display_data.projection = projection;
+  display_data.view = view;
+  display_data.font = &arialFont;
+  Text_Display text_display(display_data);
+
+  //Skybox setup
+  Shape skybox_cube;
+  set_basic_cube(&skybox_cube);
+  std::vector<std::string> faces {
+    "skybox/right.jpg",
+    "skybox/left.jpg",
+    "skybox/top.jpg",
+    "skybox/bottom.jpg",
+    "skybox/front.jpg",
+    "skybox/back.jpg"
+  };
+  unsigned int cubemapTexture = get_cube_map(faces,false);
+  Skybox skybox(&skybox_program,skybox_cube,cubemapTexture);
+
+  //font_program shader setup
+  font_program.use();
+  font_program.setMat4("view",glm::mat4(1.0));
+  font_program.setMat4("projection", glm::ortho(-5.0, 5.0, -5.0, 5.0, -1.0, 1.0));
+  font_program.setVec4("transparentColor", glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+  font_program.setFloat("alpha", text_display.get_alpha_value());
+  font_program.setInt("texture1", 0);
+
+  //Cursor setup
+  glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_DISABLED);
+  glfwSetCursorPosCallback(window,mouse_callback);
+
   //Enable depth testing to avoid managing ordering of 3D objects
   glEnable(GL_DEPTH_TEST);
   glPolygonMode(GL_BACK,GL_LINE);
@@ -203,7 +263,7 @@ int main() {
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-  //Framebuffer (Post Processing)
+  /** Framebuffer (Post Processing) **/
   //Make framebuffer object
   unsigned int post_framebuffer;
   glGenFramebuffers(1, &post_framebuffer);
@@ -231,7 +291,8 @@ int main() {
 	  std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-  //Framebuffer (Shadows)
+  /** Framebuffer (Shadows) **/
+  //Make framebuffer object
   unsigned int depthMapFBO;
   glGenFramebuffers(1, &depthMapFBO);
   const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
@@ -253,41 +314,6 @@ int main() {
   //Reset to default
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-  //Fill Text Display Data Struct and create text display object 
-  Display_Data display_data;
-  display_data.fill_program = &fill_program;
-  display_data.font_program = &font_program;
-  display_data.projection = projection;
-  display_data.view = view;
-  display_data.font = &arialFont;
-  Text_Display text_display(display_data);
-
-  //Skybox Setup
-  Shape skybox_cube;
-  set_basic_cube(&skybox_cube);
-  std::vector<std::string> faces {
-    "skybox/right.jpg",
-    "skybox/left.jpg",
-    "skybox/top.jpg",
-    "skybox/bottom.jpg",
-    "skybox/front.jpg",
-    "skybox/back.jpg"
-  };
-  unsigned int cubemapTexture = get_cube_map(faces,false);
-  Skybox skybox(&skybox_program,skybox_cube,cubemapTexture);
-
-  //font_program shader setup
-  font_program.use();
-  font_program.setMat4("view",glm::mat4(1.0));
-  font_program.setMat4("projection", glm::ortho(-5.0, 5.0, -5.0, 5.0, -1.0, 1.0));
-  font_program.setVec4("transparentColor", glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
-  font_program.setFloat("alpha", text_display.get_alpha_value());
-  font_program.setInt("texture1", 0);
-
-  //Cursor setup
-  glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_DISABLED);
-  glfwSetCursorPosCallback(window,mouse_callback);
-
   //Stencil Testing
   glEnable(GL_STENCIL_TEST);
   glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
@@ -299,10 +325,10 @@ int main() {
     world.deltaTime = currentFrame - world.lastFrame;
     world.lastFrame = currentFrame;
 
-    //Fight rendering lag
+    //Prevent rendering lag
     enforceFrameRate(world.lastFrame,FPS);
 
-    //Bind post_framebuffer
+    //Bind post processing framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, post_framebuffer);
 
     //Set the clear color
@@ -321,10 +347,6 @@ int main() {
 
     //2. Render Scene
     /* world.render_scene(draw_map,&depth_program);
-    world.render_skybox(&skybox_program,skybox,cubemapTexture);
-    text_display.render_player_coordinates(camPos);
-    text_display.render_fire();
-
     glViewport(0,0,WIN_WIDTH,WIN_HEIGHT);
     glBindFramebuffer(GL_FRAMEBUFFER,0);
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
@@ -336,8 +358,9 @@ int main() {
     text_display.render_player_coordinates(world.camera->get_position());
     text_display.render_fire();
     text_display.render_effects_list(post_processor.get_selection());
+    text_display.render_key_status(office_key.collected);
     
-    //Post Processing
+    //Render post processing effects last
     post_processor.render_effect(&post_process_program,texColorBuffer);
     
     //3. Poll for events
@@ -360,6 +383,9 @@ void mouse_callback(GLFWwindow* win, double xpos, double ypos) {
 
   float offsetx = xpos-world.lastX;
   float offsety = world.lastY-ypos;
+
+  world.x_offset = offsetx;
+  world.y_offset = offsety;
 
   world.lastX = xpos;
   world.lastY = ypos;

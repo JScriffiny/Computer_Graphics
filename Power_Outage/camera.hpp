@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
+#include "moving_flashlight.hpp"
 
 const float YAW = -90.0f;
 const float PITCH = 0.0f;
@@ -39,6 +40,8 @@ class Camera {
 
   glm::vec3 get_position();
   glm::vec3 get_front();
+  float get_pitch();
+  float get_yaw();
   void set_position(glm::vec3 newPos);
 
   glm::mat4 get_view_matrix ();

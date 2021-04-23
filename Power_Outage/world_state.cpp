@@ -9,6 +9,8 @@
 #include "world_state.hpp"
 #include "moving_door.hpp"
 #include "moving_plate.hpp"
+#include "moving_flashlight.hpp"
+#include "moving_key.hpp"
 #include "post_processor.hpp"
 
 World::World(int width, int height) {
@@ -100,15 +102,19 @@ void World::process_input (GLFWwindow *win) {
 
   //Toggle Anything
   if (glfwGetKey(win,GLFW_KEY_P)==GLFW_PRESS && my_toggle) {
-    dir_light_on = !dir_light_on;
+    //dir_light_on = !dir_light_on;
+    glm::vec3 pos = flashlight->get_position();
+    std::cout << "Flashlight_Pos: (X:" << pos.x << ",Y:" << pos.y << ",Z:" << pos.z << ")" <<std::endl;
+    std::cout << "Pitch: " + std::to_string(camera->get_yaw()) + "; Yaw: " + std::to_string(camera->get_pitch()) <<std::endl;
     my_toggle = false;
   }
   if (glfwGetKey(win,GLFW_KEY_P)==GLFW_RELEASE) {
     my_toggle = true;
   }
 
-  door->process_input(win,camera->get_position());
+  door->process_input(win,camera->get_position(),office_key->inserted);
   pressure_plate->process_input(win,camera->get_position());
+  office_key->process_input(win,camera->get_position());
 }
 
 bool has_been_seen (std::vector<Shader*>* seen_vec, Shader* shader) {
@@ -134,6 +140,7 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
   if (pressure_plate->get_plate_status() || post_processor->get_nightvision_status()) {
     special_conditions = true;
   }
+  special_conditions = true;
 
   //for each structure (including a reference to a shape and its associated shader program)
   //   check to see if the shader has already been set (skip if so)
@@ -159,6 +166,7 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
     current_shader->setBool("point_light.on",point_light_on);
     //Spot Light
     current_shader->setVec3("spot_light.position",cam_pos);
+    //current_shader->setVec3("spot_light.position",flashlight->get_position());
     current_shader->setVec3("spot_light.direction",camera->get_front());
     current_shader->setFloat("spot_light.cutOff",glm::cos(glm::radians(12.5f)));
     current_shader->setFloat("spot_light.outerCutOff",glm::cos(glm::radians(17.5f)));
@@ -237,6 +245,20 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
   furniture_shader->setBool("use_texture",true);
   furniture->draw(furniture_shader->ID);
   furniture_shader->setBool("use_texture",false);
+
+  //Draw keyhole
+  Shape* keyhole = objects["keyhole"].shape;
+  Shader* keyhole_shader = objects["keyhole"].shader;
+  keyhole_shader->use();
+  glm::mat4 keyhole_transform(1.0f);
+  keyhole_transform = glm::translate(keyhole_transform,glm::vec3(5.159f,-3.7f,0.0f));
+  keyhole_transform = glm::rotate(keyhole_transform,glm::radians(-90.0f),glm::vec3(0.0,1.0,0.0));
+  keyhole_transform = glm::scale(keyhole_transform,glm::vec3(0.25f,0.25f,0.25f));
+  glBindTexture(GL_TEXTURE_2D,objects["keyhole"].texture);
+  keyhole_shader->setMat4("model",keyhole_transform);
+  keyhole_shader->setBool("use_texture",true);
+  keyhole->draw(keyhole_shader->ID);
+  keyhole_shader->setBool("use_texture",false);
   
   //Draw cube1 (silver)
   Shape* cube1 = objects["cube1"].shape;
@@ -263,6 +285,12 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
   cube2->use_material(cube2_shader);
   cube2->draw(cube2_shader->ID);
 
+  //Draw flashlight
+  //flashlight->draw(cam_pos,x_offset,y_offset);
+
+  //Draw key
+  office_key->draw();
+
   /*** Stenciled Objects Section ***/
   glStencilFunc(GL_ALWAYS,1,0xFF);
   glStencilMask(0xFF);
@@ -285,7 +313,9 @@ void World::render_stencils(Shader* fill_program, Shader* import_program) {
     door->set_scale(glm::vec3(0.52,0.52,0.52));
     fill_program->use();
     fill_program->setBool("use_set_color",true);
-    fill_program->setVec4("set_color",glm::vec4(0.3,0.7,1.0,0.5));
+    //Door outline is red until key is inserted
+    if (!office_key->inserted) fill_program->setVec4("set_color",glm::vec4(1.0,0.0,0.0,0.5));
+    else fill_program->setVec4("set_color",glm::vec4(0.3,0.7,1.0,0.5));
     door->set_shader(fill_program);
     door->draw();
     door->set_shader(import_program);
@@ -309,6 +339,25 @@ void World::render_stencils(Shader* fill_program, Shader* import_program) {
     pressure_plate->draw();
     pressure_plate->set_shader(import_program);
     pressure_plate->set_scale(glm::vec3(0.5,0.5,0.5));
+    fill_program->setBool("use_set_color",false);
+    glStencilMask(0xFF);
+    glStencilFunc(GL_ALWAYS,1,0xFF);
+    glEnable(GL_DEPTH_TEST);
+  }
+
+  float dist_to_key = glm::length(camera->get_position()-office_key->get_position());
+  if (dist_to_key <= (office_key->key_range) && !office_key->inserted) {
+    glStencilFunc(GL_NOTEQUAL,1,0xFF);
+    glStencilMask(0x00);
+    glDisable(GL_DEPTH_TEST);
+    office_key->set_scale(glm::vec3(0.27,0.27,0.27));
+    fill_program->use();
+    fill_program->setBool("use_set_color",true);
+    fill_program->setVec4("set_color",glm::vec4(0.3,0.7,1.0,0.5));
+    office_key->set_shader(fill_program);
+    office_key->draw();
+    office_key->set_shader(import_program);
+    office_key->set_scale(glm::vec3(0.25,0.25,0.25));
     fill_program->setBool("use_set_color",false);
     glStencilMask(0xFF);
     glStencilFunc(GL_ALWAYS,1,0xFF);

@@ -1,4 +1,5 @@
 #include "camera.hpp"
+#include "moving_flashlight.hpp"
 
 Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch):front(glm::vec3(0.0f, 0.0f, -1.0f)), move_speed(SPEED), sensitivity(SENSITIVITY), zoom(ZOOM) {
     this->position = position;
@@ -56,6 +57,12 @@ glm::vec3 Camera::get_position() {
 }
 glm::vec3 Camera::get_front() {
     return this->front;
+}
+float Camera::get_pitch() {
+    return this->pitch;
+}
+float Camera::get_yaw() {
+    return this->yaw;
 }
 
 void Camera::set_position(glm::vec3 newPos) {

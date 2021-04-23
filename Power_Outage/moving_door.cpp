@@ -50,26 +50,28 @@ void MovingDoor::draw() {
     shader_program->setBool("use_texture",false);
 }
 
-void MovingDoor::process_input(GLFWwindow *win, glm::vec3 camera_pos) {
+void MovingDoor::process_input(GLFWwindow *win, glm::vec3 camera_pos,bool key_inserted) {
     //Only open door if close enough
     float dist_to_door = glm::length(camera_pos-this->position);
     bool within_range = false;
     if (dist_to_door < range) within_range = true;
 
     //Press space bar to open door
-    if (glfwGetKey(win,GLFW_KEY_SPACE)==GLFW_PRESS && within_range && door_press_once) {
-        this->is_open = !this->is_open;
-        if (this->is_open) {
-            this->rotation = 90.0f;
-            this->position = glm::vec3(3.7,-3.99,4.9);
+    if (key_inserted) {
+        if (glfwGetKey(win,GLFW_KEY_SPACE)==GLFW_PRESS && within_range && door_press_once) {
+            this->is_open = !this->is_open;
+            if (this->is_open) {
+                this->rotation = 90.0f;
+                this->position = glm::vec3(3.7,-3.99,4.9);
+            }
+            else {
+                this->rotation = 0.0f;
+                this->position = this->original_position;
+            }
+            door_press_once = false;
         }
-        else {
-            this->rotation = 0.0f;
-            this->position = this->original_position;
+        if (glfwGetKey(win,GLFW_KEY_SPACE)==GLFW_RELEASE) {
+            door_press_once = true;
         }
-        door_press_once = false;
-    }
-    if (glfwGetKey(win,GLFW_KEY_SPACE)==GLFW_RELEASE) {
-        door_press_once = true;
     }
 }
