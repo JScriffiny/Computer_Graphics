@@ -6,7 +6,6 @@
 #include "Shader.hpp"
 #include "moving_door.hpp"
 #include "moving_plate.hpp"
-#include "moving_flashlight.hpp"
 #include "moving_key.hpp"
 #include "post_processor.hpp"
 
@@ -26,8 +25,6 @@ class World {
     glm::mat4 getLightPOV();
     void check_collision(glm::vec3 previous_pos);
     
-    //These are left public for convenience (but depending upon the complexity of your world state, it would 
-    //make sense to keep some or all of the data members protected)
     glm::vec4 clear_color = glm::vec4(0.0f,0.0f,0.0f,1.0f);
     bool rgba_array[4] = {false,false,false,false};
     unsigned int floor_texture = 0;
@@ -88,9 +85,6 @@ class World {
 
     //Door
     MovingDoor* door;
-
-    //Flashlight
-    MovingFlashlight* flashlight;
 
     //Office Key
     MovingKey* office_key;

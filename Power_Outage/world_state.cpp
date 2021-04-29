@@ -9,7 +9,6 @@
 #include "world_state.hpp"
 #include "moving_door.hpp"
 #include "moving_plate.hpp"
-#include "moving_flashlight.hpp"
 #include "moving_key.hpp"
 #include "post_processor.hpp"
 
@@ -32,13 +31,11 @@ void World::process_input (GLFWwindow *win) {
         bird_cam_on = true;
         saved_player_pos = camera->get_position();
         camera->set_position(bird_cam_pos);
-        dir_light_on = true; //turn ON lights when in bird's eye view
       }
       else {
         bird_cam_on = false;
         bird_cam_pos = camera->get_position();
         camera->set_position(saved_player_pos);
-        dir_light_on = false; //turn OFF lights when in bird's eye view
       }
   }
   if (glfwGetKey(win,GLFW_KEY_TAB)==GLFW_RELEASE) {
@@ -103,9 +100,7 @@ void World::process_input (GLFWwindow *win) {
   //Toggle Anything
   if (glfwGetKey(win,GLFW_KEY_P)==GLFW_PRESS && my_toggle) {
     //dir_light_on = !dir_light_on;
-    glm::vec3 pos = flashlight->get_position();
-    std::cout << "Flashlight_Pos: (X:" << pos.x << ",Y:" << pos.y << ",Z:" << pos.z << ")" <<std::endl;
-    std::cout << "Pitch: " + std::to_string(camera->get_yaw()) + "; Yaw: " + std::to_string(camera->get_pitch()) <<std::endl;
+    std::cout << "Print something" << std::endl;
     my_toggle = false;
   }
   if (glfwGetKey(win,GLFW_KEY_P)==GLFW_RELEASE) {
@@ -137,14 +132,11 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
   std::vector<Shader*> seen_vec;
 
   bool special_conditions = false;
-  if (pressure_plate->get_plate_status() || post_processor->get_nightvision_status()) {
+  if (bird_cam_on || pressure_plate->get_plate_status() || post_processor->get_nightvision_status()) {
     special_conditions = true;
   }
-  special_conditions = true;
 
-  //for each structure (including a reference to a shape and its associated shader program)
-  //   check to see if the shader has already been set (skip if so)
-  //   initialize common shader uniforms (camera and lighting for example)
+  //Initialize common shader uniforms
   for (std::map<std::string,Draw_Data>::iterator it = objects.begin(); it != objects.end(); ++it) {
     if (has_been_seen(&seen_vec,it->second.shader)) {
       continue;
@@ -166,7 +158,6 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
     current_shader->setBool("point_light.on",point_light_on);
     //Spot Light
     current_shader->setVec3("spot_light.position",cam_pos);
-    //current_shader->setVec3("spot_light.position",flashlight->get_position());
     current_shader->setVec3("spot_light.direction",camera->get_front());
     current_shader->setFloat("spot_light.cutOff",glm::cos(glm::radians(12.5f)));
     current_shader->setFloat("spot_light.outerCutOff",glm::cos(glm::radians(17.5f)));
@@ -184,6 +175,11 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
     current_shader->setVec3("dir_light.specular",dir_light_color);
     current_shader->setBool("dir_light.on",(dir_light_on || special_conditions));
     current_shader->setFloat("time",glfwGetTime());
+
+    //Shadow Setup
+    current_shader->setMat4("lightSpaceMatrix",getLightPOV());
+    current_shader->setInt("texture_image",0);
+    current_shader->setInt("depth_image",1);
   }
 
   //Set depthShader's point of view
@@ -195,7 +191,7 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
   //Draw worldFloor
   Shape* worldFloor = objects["worldFloor"].shape;
   Shader* worldFloor_shader = objects["worldFloor"].shader;
-  //if (optional_shader != NULL) worldFloor_shader = optional_shader;
+  if (optional_shader != NULL) worldFloor_shader = optional_shader;
   worldFloor_shader->use();
   worldFloor_shader->setMat4("transform",glm::mat4(1.0f));
   worldFloor_shader->setMat4("lightSpaceMatrix",getLightPOV());
@@ -204,6 +200,7 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
   worldFloor_model = glm::scale(worldFloor_model,glm::vec3(100.0f,100.0f,100.0f));
   worldFloor_model = glm::rotate(worldFloor_model,glm::radians(-90.0f),glm::vec3(1.0,0.0,0.0));
   worldFloor_shader->setMat4("model",worldFloor_model);
+  glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D,floor_texture);
   worldFloor->draw(worldFloor_shader->ID);
 
@@ -236,10 +233,12 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
   //Draw furniture
   Shape* furniture = objects["furniture"].shape;
   Shader* furniture_shader = objects["furniture"].shader;
+  if (optional_shader != NULL) furniture_shader = optional_shader;
   furniture_shader->use();
   glm::mat4 furniture_transform(1.0f);
   furniture_transform = glm::translate(furniture_transform,glm::vec3(0.0f,-3.99f,0.0f));
   furniture_transform = glm::scale(furniture_transform,glm::vec3(0.5f,0.5f, 0.5f));
+  glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D,objects["furniture"].texture);
   furniture_shader->setMat4("model",furniture_transform);
   furniture_shader->setBool("use_texture",true);
@@ -249,11 +248,13 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
   //Draw keyhole
   Shape* keyhole = objects["keyhole"].shape;
   Shader* keyhole_shader = objects["keyhole"].shader;
+  if (optional_shader != NULL) keyhole_shader = optional_shader;
   keyhole_shader->use();
   glm::mat4 keyhole_transform(1.0f);
   keyhole_transform = glm::translate(keyhole_transform,glm::vec3(5.159f,-3.7f,0.0f));
   keyhole_transform = glm::rotate(keyhole_transform,glm::radians(-90.0f),glm::vec3(0.0,1.0,0.0));
   keyhole_transform = glm::scale(keyhole_transform,glm::vec3(0.25f,0.25f,0.25f));
+  glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D,objects["keyhole"].texture);
   keyhole_shader->setMat4("model",keyhole_transform);
   keyhole_shader->setBool("use_texture",true);
@@ -263,11 +264,11 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
   //Draw cube1 (silver)
   Shape* cube1 = objects["cube1"].shape;
   Shader* cube1_shader = objects["cube1"].shader;
+  if (optional_shader != NULL) cube1_shader = optional_shader;
+  cube1_shader->use();
   glm::mat4 cube1_transform(1.0f);
   cube1_transform = glm::translate(cube1_transform,glm::vec3(-1.0f,-3.35f,1.0f));
-  //cube1_transform = glm::translate(cube1_transform,glm::vec3(6.0f,-3.0f,3.75f));
   cube1_transform = glm::scale(cube1_transform,glm::vec3(0.25f,0.25f, 0.25f));
-  cube1_shader->use();
   cube1_shader->setMat4("transform",glm::mat4(1.0f));
   cube1_shader->setMat4("model",cube1_transform);
   cube1->use_material(cube1_shader);
@@ -276,32 +277,39 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
   //Draw cube2 (pearl)
   Shape* cube2 = objects["cube2"].shape;
   Shader* cube2_shader = objects["cube2"].shader;
+  if (optional_shader != NULL) cube2_shader = optional_shader;
+  cube2_shader->use();
   glm::mat4 cube2_transform(1.0f);
   cube2_transform = glm::translate(cube2_transform,glm::vec3(-1.05f,-3.35f,-1.0f)); 
   cube2_transform = glm::scale(cube2_transform,glm::vec3(0.25f,0.25f, 0.25f));
-  cube2_shader->use();
   cube2_shader->setMat4("transform",glm::mat4(1.0f));
   cube2_shader->setMat4("model",cube2_transform);
   cube2->use_material(cube2_shader);
   cube2->draw(cube2_shader->ID);
 
-  //Draw flashlight
-  //flashlight->draw(cam_pos,x_offset,y_offset);
-
-  //Draw key
-  office_key->draw();
-
   /*** Stenciled Objects Section ***/
   glStencilFunc(GL_ALWAYS,1,0xFF);
   glStencilMask(0xFF);
 
+  //Draw key
+  office_key->draw(optional_shader);
+
   //Draw door
-  door->draw();
+  door->draw(optional_shader);
 
   //Draw pressure plate
-  pressure_plate->draw();
+  pressure_plate->draw(optional_shader);
 
   render_stencils(objects["stencil_fill"].shader,objects["stencil_import"].shader);
+}
+
+glm::mat4 World::getLightPOV() {
+  glm::mat4 lightProjection = glm::ortho(-10.0f,10.0f,-10.0f,10.0f,1.0f,20.0f);
+  glm::vec3 light_pos = glm::vec3(spot_light_position);
+  glm::vec3 front = camera->get_front();
+  glm::mat4 lightView = glm::lookAt(light_pos,front*4.0f,glm::vec3(0.0f,1.0f,0.0f));
+  glm::mat4 lightSpaceMatrix = lightProjection * lightView; 
+  return lightSpaceMatrix;
 }
 
 void World::render_stencils(Shader* fill_program, Shader* import_program) {
@@ -317,7 +325,7 @@ void World::render_stencils(Shader* fill_program, Shader* import_program) {
     if (!office_key->inserted) fill_program->setVec4("set_color",glm::vec4(1.0,0.0,0.0,0.5));
     else fill_program->setVec4("set_color",glm::vec4(0.3,0.7,1.0,0.5));
     door->set_shader(fill_program);
-    door->draw();
+    door->draw(NULL);
     door->set_shader(import_program);
     door->set_scale(glm::vec3(0.5,0.5,0.5));
     fill_program->setBool("use_set_color",false);
@@ -336,7 +344,7 @@ void World::render_stencils(Shader* fill_program, Shader* import_program) {
     fill_program->setBool("use_set_color",true);
     fill_program->setVec4("set_color",glm::vec4(0.3,0.7,1.0,0.5));
     pressure_plate->set_shader(fill_program);
-    pressure_plate->draw();
+    pressure_plate->draw(NULL);
     pressure_plate->set_shader(import_program);
     pressure_plate->set_scale(glm::vec3(0.5,0.5,0.5));
     fill_program->setBool("use_set_color",false);
@@ -355,7 +363,7 @@ void World::render_stencils(Shader* fill_program, Shader* import_program) {
     fill_program->setBool("use_set_color",true);
     fill_program->setVec4("set_color",glm::vec4(0.3,0.7,1.0,0.5));
     office_key->set_shader(fill_program);
-    office_key->draw();
+    office_key->draw(NULL);
     office_key->set_shader(import_program);
     office_key->set_scale(glm::vec3(0.25,0.25,0.25));
     fill_program->setBool("use_set_color",false);
@@ -363,16 +371,6 @@ void World::render_stencils(Shader* fill_program, Shader* import_program) {
     glStencilFunc(GL_ALWAYS,1,0xFF);
     glEnable(GL_DEPTH_TEST);
   }
-}
-
-glm::mat4 World::getLightPOV() {
-  glm::mat4 lightProjection = glm::ortho(-10.0f,10.0f,-10.0f,10.0f,1.0f,20.0f);
-  glm::vec3 light_pos = glm::vec3(point_light_position);
-  glm::vec3 front = camera->get_front();
-  //glm::mat4 lightView = glm::lookAt(light_pos,front*10.0f,glm::vec3(0.0f,1.0f,0.0f));
-  glm::mat4 lightView = glm::lookAt(light_pos,glm::vec3(6.0f,-6.0f,3.75f),glm::vec3(0.0f,1.0f,0.0f));
-  glm::mat4 lightSpaceMatrix = lightProjection * lightView; 
-  return lightSpaceMatrix;
 }
 
 void World::check_collision(glm::vec3 previous_pos) {

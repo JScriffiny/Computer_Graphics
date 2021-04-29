@@ -26,7 +26,7 @@ class MovingKey: public Shape {
     public:
         MovingKey(Shape_Struct s, glm::vec3 scale, glm::vec3 pos, float orient);
         void process_input(GLFWwindow *win, glm::vec3 camera_pos);
-        void draw();
+        void draw(Shader *optional_shader);
         glm::vec3 get_position();
         void set_texture(unsigned int texture);
         void set_shader(Shader* shader_program);
@@ -38,6 +38,7 @@ class MovingKey: public Shape {
         bool inserted = false;
         bool collect_flag = true;
         bool insert_flag = true;
+        Shader* original_shader;
 };
 
 #endif //MOVING_KEY_HPP

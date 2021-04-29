@@ -30,13 +30,14 @@ class MovingDoor: public Shape {
     public:
         MovingDoor(Shape_Struct s, glm::vec3 scale, glm::vec3 pos, float orient);
         void process_input(GLFWwindow *win, glm::vec3 camera_pos,bool key_inserted);
-        void draw();
+        void draw(Shader *optional_shader);
         bool get_door_status();
         glm::vec3 get_position();
         void set_texture(unsigned int texture);
         void set_shader(Shader* shader_program);
         void set_scale(glm::vec3 scale_vec);
         double range = 4.5;
+        Shader* original_shader;
 };
 
 #endif //MOVING_DOOR_HPP

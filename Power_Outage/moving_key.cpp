@@ -14,6 +14,7 @@ void MovingKey::set_texture(unsigned int texture) {
 
 void MovingKey::set_shader(Shader* shader_program) {
     this->shader_program = shader_program;
+    original_shader = shader_program;
 }
 
 void MovingKey::set_scale(glm::vec3 scale_vec) {
@@ -24,7 +25,9 @@ glm::vec3 MovingKey::get_position() {
     return position;
 }
 
-void MovingKey::draw() {
+void MovingKey::draw(Shader *optional_shader) {
+    if (optional_shader != NULL) this->shader_program = optional_shader;
+    else this->shader_program = original_shader;
     //Draw key to default position until collected
     if (!collected && !first_collect) {
         shader_program->use();
@@ -33,6 +36,7 @@ void MovingKey::draw() {
         shape_trans = glm::rotate(shape_trans,glm::radians(this->rotation),glm::vec3(0.0,1.0,0.0));
         shape_trans = glm::scale(shape_trans,this->scale_vec);
         shape_trans = glm::rotate(shape_trans,glm::radians(this->orientation),glm::vec3(0.0,1.0,0.0));
+        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D,texture);
         shader_program->setMat4("model",shape_trans);
         shader_program->setBool("use_texture",true);
@@ -41,7 +45,7 @@ void MovingKey::draw() {
     }
     //Once collected, do not draw key again until inserted
     if (inserted) {
-        position = glm::vec3(6.0f,-2.85f,0.0f);
+        position = glm::vec3(6.14f,-2.85f,0.0f);
         shader_program->use();
         glm::mat4 shape_trans(1.0f);
         shape_trans = glm::translate(shape_trans, this->position);
@@ -49,6 +53,7 @@ void MovingKey::draw() {
         shape_trans = glm::rotate(shape_trans,glm::radians(-90.0f),glm::vec3(0.0,1.0,0.0));
         shape_trans = glm::scale(shape_trans,this->scale_vec);
         shape_trans = glm::rotate(shape_trans,glm::radians(this->orientation),glm::vec3(0.0,1.0,0.0));
+        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D,texture);
         shader_program->setMat4("model",shape_trans);
         shader_program->setBool("use_texture",true);

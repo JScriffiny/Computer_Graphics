@@ -1,5 +1,4 @@
 #include "camera.hpp"
-#include "moving_flashlight.hpp"
 
 Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch):front(glm::vec3(0.0f, 0.0f, -1.0f)), move_speed(SPEED), sensitivity(SENSITIVITY), zoom(ZOOM) {
     this->position = position;

@@ -13,7 +13,6 @@
 #include "skybox.hpp"
 #include "moving_door.hpp"
 #include "moving_plate.hpp"
-#include "moving_flashlight.hpp"
 #include "moving_key.hpp"
 
 //Constants
@@ -103,11 +102,6 @@ int main() {
                   glm::vec3(0.5,0.5,0.5),glm::vec3(5.0,-3.99,3.75),0.0f);
   door.set_texture(new_importer.getTexture());
 
-  //Flashlight
-  MovingFlashlight flashlight(new_importer.loadFiles("models/flashlight"),
-                  glm::vec3(0.02,0.02,0.02),glm::vec3(11.0,-3.0,3.0),0.0f,115.0f,0.0f);
-  flashlight.set_texture(new_importer.getTexture());
-
   //Key
   MovingKey office_key(new_importer.loadFiles("models/key"),
                   glm::vec3(0.25,0.25,0.25),glm::vec3(11.0,-3.99,1.0),0.0f);
@@ -161,12 +155,10 @@ int main() {
   //Set shaders for moving objects
   pressure_plate.set_shader(&import_program);
   door.set_shader(&import_program);
-  flashlight.set_shader(&import_program);
   office_key.set_shader(&import_program);
   //Initialize world plate and door
   world.pressure_plate = &pressure_plate;
   world.door = &door;
-  world.flashlight = &flashlight;
   world.office_key = &office_key;
   
   //Shader initialization
@@ -199,7 +191,6 @@ int main() {
     shaders[i]->setFloat("shininess",256);
     //Spot Light
     shaders[i]->setVec3("spot_light.position",world.camera->get_position());
-    //shaders[i]->setVec3("spot_light.position",flashlight.get_position());
     shaders[i]->setVec3("spot_light.direction",world.camera->get_front());
     shaders[i]->setFloat("spot_light.cutOff",glm::cos(glm::radians(12.5f)));
     shaders[i]->setFloat("spot_light.outerCutOff",glm::cos(glm::radians(17.5f)));
@@ -295,7 +286,7 @@ int main() {
   //Make framebuffer object
   unsigned int depthMapFBO;
   glGenFramebuffers(1, &depthMapFBO);
-  const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+  const unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;
   //Generate 2D texture to hold depth information
   unsigned int depthMap;
   glGenTextures(1, &depthMap);
@@ -304,8 +295,10 @@ int main() {
                0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+  float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+  glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
   //Bind and attach the texture
   glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
@@ -328,17 +321,9 @@ int main() {
     //Prevent rendering lag
     enforceFrameRate(world.lastFrame,FPS);
 
-    //Bind post processing framebuffer
-    glBindFramebuffer(GL_FRAMEBUFFER, post_framebuffer);
-
     //Set the clear color
     glm::vec4 clr = world.clear_color;
     glClearColor(clr.r,clr.g,clr.b,clr.a);
-
-    /* glViewport(0,0,SHADOW_WIDTH,SHADOW_HEIGHT);
-    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO); */
-    //Clear appropriate buffers
-    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
 
     //1. Process Input
     world.process_input(window);
@@ -346,21 +331,25 @@ int main() {
     post_processor.process_input(window);
 
     //2. Render Scene
-    /* world.render_scene(draw_map,&depth_program);
-    glViewport(0,0,WIN_WIDTH,WIN_HEIGHT);
-    glBindFramebuffer(GL_FRAMEBUFFER,0);
+    //First Pass (Shadows)
+    glViewport(0,0,SHADOW_WIDTH,SHADOW_HEIGHT);
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
-    texture_program.use();
-    texture_program.setMat4("lightSpaceMatrix",world.getLightPOV()); */
+    world.render_scene(draw_map,&depth_program);
 
+    //Second Pass
+    glViewport(0,0,WIN_WIDTH,WIN_HEIGHT);
+    glBindFramebuffer(GL_FRAMEBUFFER,post_framebuffer);
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D,depthMap);
     world.render_scene(draw_map);
     skybox.render(world.camera->get_view_matrix());
     text_display.render_player_coordinates(world.camera->get_position());
-    text_display.render_fire();
     text_display.render_effects_list(post_processor.get_selection());
     text_display.render_key_status(office_key.collected);
     
-    //Render post processing effects last
+    //Third Pass (Render post processing effects last)
     post_processor.render_effect(&post_process_program,texColorBuffer);
     
     //3. Poll for events

@@ -5,7 +5,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
-#include "moving_flashlight.hpp"
 
 const float YAW = -90.0f;
 const float PITCH = 0.0f;

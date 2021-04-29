@@ -10,10 +10,12 @@ out vec3 FragPos;
 out vec3 fColor;
 out vec3 sColor;
 out vec2 TexCoord;
+out vec4 FragPosLightSpace;
 
 uniform mat4 view;
 uniform mat4 projection;
 uniform mat4 model;
+uniform mat4 lightSpaceMatrix;
 
 void main()
 {
@@ -24,4 +26,5 @@ void main()
     fColor = vec3(aColor.x,aColor.y,aColor.z);
     sColor = vec3(specColor.x,specColor.y,specColor.z);
     TexCoord = aTexCoord;
+    FragPosLightSpace = lightSpaceMatrix * vec4(FragPos,1.0);
 }
