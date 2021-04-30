@@ -128,6 +128,7 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
   glStencilMask(0x00);
 
   glm::vec3 cam_pos = camera->get_position();
+  spot_light_position = glm::vec4(cam_pos,1.0f);
   glm::mat4 wv = camera->get_view_matrix();
   std::vector<Shader*> seen_vec;
 
@@ -191,7 +192,7 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
   //Draw worldFloor
   Shape* worldFloor = objects["worldFloor"].shape;
   Shader* worldFloor_shader = objects["worldFloor"].shader;
-  if (optional_shader != NULL) worldFloor_shader = optional_shader;
+  //if (optional_shader != NULL) worldFloor_shader = optional_shader;
   worldFloor_shader->use();
   worldFloor_shader->setMat4("transform",glm::mat4(1.0f));
   worldFloor_shader->setMat4("lightSpaceMatrix",getLightPOV());
@@ -260,6 +261,21 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
   keyhole_shader->setBool("use_texture",true);
   keyhole->draw(keyhole_shader->ID);
   keyhole_shader->setBool("use_texture",false);
+
+  //Draw lampost
+  Shape* lampost = objects["lampost"].shape;
+  Shader* lampost_shader = objects["lampost"].shader;
+  if (optional_shader != NULL) lampost_shader = optional_shader;
+  lampost_shader->use();
+  glm::mat4 lampost_transform(1.0f);
+  lampost_transform = glm::translate(lampost_transform,glm::vec3(15.0f,-3.99f,0.0f));
+  lampost_transform = glm::rotate(lampost_transform,glm::radians(-90.0f),glm::vec3(0.0,1.0,0.0));
+  lampost_transform = glm::scale(lampost_transform,glm::vec3(0.3f,0.3f,0.3f));
+  glActiveTexture(GL_TEXTURE0);
+  lampost_shader->setMat4("model",lampost_transform);
+  lampost_shader->setBool("use_texture",false);
+  lampost->draw(lampost_shader->ID);
+  lampost_shader->setBool("use_texture",false);
   
   //Draw cube1 (silver)
   Shape* cube1 = objects["cube1"].shape;
@@ -295,19 +311,20 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
   office_key->draw(optional_shader);
 
   //Draw door
-  door->draw(optional_shader);
+  door->draw(NULL);
 
   //Draw pressure plate
-  pressure_plate->draw(optional_shader);
+  pressure_plate->draw(NULL);
 
   render_stencils(objects["stencil_fill"].shader,objects["stencil_import"].shader);
 }
 
 glm::mat4 World::getLightPOV() {
   glm::mat4 lightProjection = glm::ortho(-10.0f,10.0f,-10.0f,10.0f,1.0f,20.0f);
-  glm::vec3 light_pos = glm::vec3(spot_light_position);
+  glm::vec3 light_pos = spot_light_position;
+  glm::vec3 pos = glm::vec3(light_pos.x,light_pos.y+2.0f,light_pos.z);
   glm::vec3 front = camera->get_front();
-  glm::mat4 lightView = glm::lookAt(light_pos,front*4.0f,glm::vec3(0.0f,1.0f,0.0f));
+  glm::mat4 lightView = glm::lookAt(pos,front*4.0f,glm::vec3(0.0f,1.0f,0.0f));
   glm::mat4 lightSpaceMatrix = lightProjection * lightView; 
   return lightSpaceMatrix;
 }

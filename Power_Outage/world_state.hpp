@@ -31,7 +31,7 @@ class World {
 
     //Point Light
     bool point_light_on = true;
-    glm::vec4 point_light_position = glm::vec4(5.15f,-1.3f,3.75f,1.0f);
+    glm::vec4 point_light_position = glm::vec4(15.0f,5.0f,0.0f,1.0f);
     glm::vec3 point_light_color = glm::vec3(1.0f,1.0f,1.0f);
 
     //Spot Light
@@ -47,7 +47,7 @@ class World {
     //Directional Light
     bool dir_light_key_pressed = false;
     bool dir_light_on = false;
-    glm::vec3 dir_light_direction = glm::vec3(0.0,-1.0,0.0);
+    glm::vec3 dir_light_direction = glm::vec3(1.0,-1.0,1.0);
     glm::vec3 dir_light_color = glm::vec3(0.4f,0.4f,0.4f);
 
     //Singular key press booleans

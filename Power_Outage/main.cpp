@@ -85,6 +85,10 @@ int main() {
   Shape keyhole(new_keyhole);
   unsigned int keyhole_texture = new_importer.getTexture();
 
+  //Lampost
+  Shape_Struct new_lampost = new_importer.loadFiles("models/lampost");
+  Shape lampost(new_lampost);
+
   //Material Cubes
   Shape cube1,cube2;
   set_basic_cube(&cube1);
@@ -143,6 +147,9 @@ int main() {
   draw_map["keyhole"].shape = &keyhole;
   draw_map["keyhole"].shader = &import_program;
   draw_map["keyhole"].texture = keyhole_texture;
+  //Add lampost to map
+  draw_map["lampost"].shape = &lampost;
+  draw_map["lampost"].shader = &import_program;
   //Add cubes to map
   draw_map["cube1"].shape = &cube1;
   draw_map["cube1"].shader = &fill_program;
@@ -181,14 +188,14 @@ int main() {
     //Point Light
     glm::vec3 wp = world.point_light_position;
     shaders[i]->setVec3("point_light.position",glm::vec3(wp.x,wp.y,wp.z));
-    shaders[i]->setVec3("point_light.ambient",0.2f*world.point_light_color);
+    shaders[i]->setVec3("point_light.ambient",0.8f*world.point_light_color);
     shaders[i]->setVec3("point_light.diffuse",world.point_light_color);
     shaders[i]->setVec3("point_light.specular",world.point_light_color);
     shaders[i]->setBool("point_light.on",world.point_light_on);
     shaders[i]->setFloat("point_light.constant",1.0);
     shaders[i]->setFloat("point_light.linear",0.14);
     shaders[i]->setFloat("point_light.quadratic",0.07);
-    shaders[i]->setFloat("shininess",256);
+    shaders[i]->setFloat("shininess",2);
     //Spot Light
     shaders[i]->setVec3("spot_light.position",world.camera->get_position());
     shaders[i]->setVec3("spot_light.direction",world.camera->get_front());
