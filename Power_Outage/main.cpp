@@ -225,6 +225,7 @@ int main() {
   display_data.view = view;
   display_data.font = &arialFont;
   Text_Display text_display(display_data);
+  world.text_display = &text_display;
 
   //Skybox setup
   Shape skybox_cube;
@@ -239,6 +240,7 @@ int main() {
   };
   unsigned int cubemapTexture = get_cube_map(faces,false);
   Skybox skybox(&skybox_program,skybox_cube,cubemapTexture);
+  world.skybox = &skybox;
 
   //font_program shader setup
   font_program.use();
@@ -288,6 +290,7 @@ int main() {
   if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 	  std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  world.post_buffer = post_framebuffer;
 
   /** Framebuffer (Shadows) **/
   //Make framebuffer object
@@ -313,6 +316,8 @@ int main() {
   glReadBuffer(GL_NONE);
   //Reset to default
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  world.shadow_buffer = depthMapFBO;
+  world.shadow_depthMap = depthMap;
 
   //Stencil Testing
   glEnable(GL_STENCIL_TEST);
@@ -334,28 +339,12 @@ int main() {
 
     //1. Process Input
     world.process_input(window);
-    text_display.process_input(window);
-    post_processor.process_input(window);
 
     //2. Render Scene
     //First Pass (Shadows)
-    glViewport(0,0,SHADOW_WIDTH,SHADOW_HEIGHT);
-    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
     world.render_scene(draw_map,&depth_program);
-
-    //Second Pass
-    glViewport(0,0,WIN_WIDTH,WIN_HEIGHT);
-    glBindFramebuffer(GL_FRAMEBUFFER,post_framebuffer);
-    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D,depthMap);
+    //Second Pass (Primary rendering)
     world.render_scene(draw_map);
-    skybox.render(world.camera->get_view_matrix());
-    text_display.render_player_coordinates(world.camera->get_position());
-    text_display.render_effects_list(post_processor.get_selection());
-    text_display.render_key_status(office_key.collected);
-    
     //Third Pass (Render post processing effects last)
     post_processor.render_effect(&post_process_program,texColorBuffer);
     

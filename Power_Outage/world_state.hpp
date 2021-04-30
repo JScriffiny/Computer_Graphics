@@ -8,6 +8,8 @@
 #include "moving_plate.hpp"
 #include "moving_key.hpp"
 #include "post_processor.hpp"
+#include "text_display.hpp"
+#include "skybox.hpp"
 
 struct Draw_Data {
   Shape* shape;
@@ -70,6 +72,11 @@ class World {
     float x_offset = 0.0f;
     float y_offset = 0.0f;
 
+    //Framebuffers
+    unsigned int shadow_buffer;
+    unsigned int shadow_depthMap;
+    unsigned int post_buffer;
+
     //Camera
     bool cameraView_key_pressed = false;
     bool bird_cam_on = false;
@@ -79,6 +86,12 @@ class World {
 
     //Post Processor
     Post_Processor* post_processor;
+
+    //Text Display
+    Text_Display* text_display;
+
+    //Skybox
+    Skybox* skybox;
 
     //Pressure Plate
     MovingPlate* pressure_plate;

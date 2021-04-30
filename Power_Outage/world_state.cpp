@@ -107,9 +107,12 @@ void World::process_input (GLFWwindow *win) {
     my_toggle = true;
   }
 
+  //Separate input processing
   door->process_input(win,camera->get_position(),office_key->inserted);
   pressure_plate->process_input(win,camera->get_position());
   office_key->process_input(win,camera->get_position());
+  text_display->process_input(win);
+  post_processor->process_input(win);
 }
 
 bool has_been_seen (std::vector<Shader*>* seen_vec, Shader* shader) {
@@ -124,6 +127,19 @@ bool has_been_seen (std::vector<Shader*>* seen_vec, Shader* shader) {
 }
 
 void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optional_shader) {
+  if (optional_shader != NULL) {
+    glViewport(0,0,2048,2048);
+    glBindFramebuffer(GL_FRAMEBUFFER, shadow_buffer);
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+  }
+  else {
+    glViewport(0,0,960,720);
+    glBindFramebuffer(GL_FRAMEBUFFER,post_buffer);
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D,shadow_depthMap);
+  }
+
   //Clear the stencil mask before rendering scene
   glStencilMask(0x00);
 
@@ -303,20 +319,25 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
   cube2->use_material(cube2_shader);
   cube2->draw(cube2_shader->ID);
 
-  /*** Stenciled Objects Section ***/
+  //Stenciled Objects Section
   glStencilFunc(GL_ALWAYS,1,0xFF);
   glStencilMask(0xFF);
-
   //Draw key
   office_key->draw(optional_shader);
-
   //Draw door
   door->draw(NULL);
-
   //Draw pressure plate
   pressure_plate->draw(NULL);
-
+  //Render all stencils
   render_stencils(objects["stencil_fill"].shader,objects["stencil_import"].shader);
+
+  //Render skybox
+  skybox->render(camera->get_view_matrix());
+
+  //Render text displays
+  text_display->render_player_coordinates(camera->get_position());
+  text_display->render_effects_list(post_processor->get_selection());
+  text_display->render_key_status(office_key->collected);
 }
 
 glm::mat4 World::getLightPOV() {
