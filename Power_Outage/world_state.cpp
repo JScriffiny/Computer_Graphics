@@ -99,7 +99,6 @@ void World::process_input (GLFWwindow *win) {
 
   //Toggle Anything
   if (glfwGetKey(win,GLFW_KEY_P)==GLFW_PRESS && my_toggle) {
-    //dir_light_on = !dir_light_on;
     std::cout << "Print something" << std::endl;
     my_toggle = false;
   }

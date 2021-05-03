@@ -23,13 +23,25 @@ class Text_Display {
     Display_Data data;
   public:
     Text_Display(Display_Data data);
+    void initialize();
     float get_alpha_value();
     void process_input(GLFWwindow* win);
     void render_player_coordinates(glm::vec3 camPos);
     void render_effects_list(int effect_id);
     void render_key_status(bool key_collected);
+
     Shape rect_player_coordinates;
     Shape rect_effects_list;
+    Shape rect_selected_1;
+    Shape rect_selected_2;
+    Shape rect_selected_3;
+    Shape rect_selected_4;
+    Shape rect_selected_5;
+    Shape rect_selected_6;
+    Shape rect_selected_7;
+    std::vector<Shape*> rect_selects;
+    std::vector<std::string> effects;
+
     Shape rect_key_status;
     bool effects_list_flag = true;
     bool effects_list_activated = false;

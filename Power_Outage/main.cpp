@@ -45,7 +45,7 @@ Camera camera(glm::vec3(10.0f,-3.0f,-3.0f),glm::vec3(0.0f,1.0f,0.0f),115.0f, 0.0
 
 //Function Prototypes
 void mouse_callback (GLFWwindow* win, double xpos, double ypos);
-void enforceFrameRate(double last_frame_time, double frame_rate); //fights rendering lag
+void enforceFrameRate(double last_frame_time); //fights rendering lag
 
 int main() {
   //Initialize the environment
@@ -59,6 +59,7 @@ int main() {
 
   //Initialize post processor
   world.post_processor = &post_processor;
+  world.post_processor->initialize();
 
   //The font must be initialized -after- the environment.
   arialFont.initialize();
@@ -226,6 +227,7 @@ int main() {
   display_data.font = &arialFont;
   Text_Display text_display(display_data);
   world.text_display = &text_display;
+  world.text_display->initialize();
 
   //Skybox setup
   Shape skybox_cube;
@@ -330,9 +332,6 @@ int main() {
     world.deltaTime = currentFrame - world.lastFrame;
     world.lastFrame = currentFrame;
 
-    //Prevent rendering lag
-    enforceFrameRate(world.lastFrame,FPS);
-
     //Set the clear color
     glm::vec4 clr = world.clear_color;
     glClearColor(clr.r,clr.g,clr.b,clr.a);
@@ -341,18 +340,18 @@ int main() {
     world.process_input(window);
 
     //2. Render Scene
-    //First Pass (Shadows)
-    world.render_scene(draw_map,&depth_program);
-    //Second Pass (Primary rendering)
-    world.render_scene(draw_map);
-    //Third Pass (Render post processing effects last)
-    post_processor.render_effect(&post_process_program,texColorBuffer);
+    world.render_scene(draw_map,&depth_program); //Shadows
+    world.render_scene(draw_map); //Primary rendering
+    post_processor.render_effect(&post_process_program,texColorBuffer); //Render post processing effects last
     
     //3. Poll for events
     glfwPollEvents();
     
     //4. Swap Buffers
     glfwSwapBuffers(window);
+
+    //5. Prevent rendering lag
+    //enforceFrameRate(currentFrame);
   }
 
   glfwTerminate();
@@ -378,6 +377,6 @@ void mouse_callback(GLFWwindow* win, double xpos, double ypos) {
   camera.process_mouse_movement(offsetx,offsety);
 }
 
-void enforceFrameRate(double last_frame_time, double frame_rate) {
-  while (glfwGetTime() >= last_frame_time+(1.0/frame_rate));
+void enforceFrameRate(double last_frame_time) {
+  while (glfwGetTime() >= last_frame_time+(1.0/FPS));
 }

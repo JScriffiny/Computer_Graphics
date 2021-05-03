@@ -11,8 +11,35 @@
 #include "Font.hpp"
 #include "text_display.hpp"
 
+#define TOTAL_EFFECTS 7
+
 Text_Display::Text_Display(Display_Data data) {
     this->data = data;
+}
+
+void Text_Display::initialize() {
+  set_basic_rectangle(&rect_player_coordinates,glm::vec3(0.8,-5.0,0.0),5.0,0.4);
+  set_basic_rectangle(&rect_effects_list,glm::vec3(-5.0,2.1,0.0),2.3,3.9);
+  set_basic_rectangle(&rect_key_status,glm::vec3(3.2,4.65,0.0),1.8,0.4);
+
+  //Effects Selection Highlight
+  effects.push_back("1) Default");
+  effects.push_back("2) Night Vision");
+  effects.push_back("3) Grayscale");
+  effects.push_back("4) Inverse Colors");
+  effects.push_back("5) Sharpen");
+  effects.push_back("6) Blur");
+  effects.push_back("7) Edge Detection");
+  rect_selects.push_back(&rect_selected_1);
+  rect_selects.push_back(&rect_selected_2);
+  rect_selects.push_back(&rect_selected_3);
+  rect_selects.push_back(&rect_selected_4);
+  rect_selects.push_back(&rect_selected_5);
+  rect_selects.push_back(&rect_selected_6);
+  rect_selects.push_back(&rect_selected_7);
+  for (int i = 0; i < TOTAL_EFFECTS; i++) {
+    set_basic_rectangle(rect_selects.at(i),glm::vec3(-5.0,4.55-(i*0.40),0.0),2.3,0.40);
+  }
 }
 
 float Text_Display::get_alpha_value() {
@@ -29,9 +56,6 @@ void Text_Display::process_input(GLFWwindow* win) {
 }
 
 void Text_Display::render_player_coordinates(glm::vec3 camPos) {
-  //Heads-Up Display Rectangle
-  set_basic_rectangle(&rect_player_coordinates,glm::vec3(0.8,-5.0,0.0),5.0,0.4);
-
   data.fill_program->use();
   data.fill_program->setMat4("model",glm::mat4(1.0f));
   data.fill_program->setMat4("view",glm::mat4(1.0));
@@ -61,20 +85,13 @@ void Text_Display::render_player_coordinates(glm::vec3 camPos) {
 
 void Text_Display::render_effects_list(int effect_id) {
   if (effects_list_activated) {
-    //Heads-Up Display Rectangle
-    set_basic_rectangle(&rect_effects_list,glm::vec3(-5.0,2.1,0.0),2.3,3.9);
-
-    //Effects Selection Highlight
-    Shape rect_selected;
-    set_basic_rectangle(&rect_selected,glm::vec3(-5.0,4.55-((effect_id-1)*0.40),0.0),2.3,0.40);
-
     data.fill_program->use();
     data.fill_program->setMat4("model",glm::mat4(1.0f));
     data.fill_program->setMat4("view",glm::mat4(1.0));
     data.fill_program->setMat4("projection",glm::ortho(-5.0,5.0,-5.0,5.0,-1.0,1.0));
     data.fill_program->setBool("use_set_color",true);
     data.fill_program->setVec4("set_color",glm::vec4(1.0f,1.0f,0.0f,0.7f));
-    rect_selected.draw(data.fill_program->ID);
+    rect_selects.at(effect_id-1)->draw(data.fill_program->ID);
     data.fill_program->setMat4("view",data.view);
     data.fill_program->setMat4("projection",data.projection);
     data.fill_program->setBool("use_set_color",false);
@@ -89,16 +106,6 @@ void Text_Display::render_effects_list(int effect_id) {
     data.fill_program->setMat4("view",data.view);
     data.fill_program->setMat4("projection",data.projection);
     data.fill_program->setBool("use_set_color",false);
-    
-    //Display Strings for each post processing effect
-    std::vector<std::string> effects;
-    effects.push_back("1) Default");
-    effects.push_back("2) Night Vision");
-    effects.push_back("3) Grayscale");
-    effects.push_back("4) Inverse Colors");
-    effects.push_back("5) Sharpen");
-    effects.push_back("6) Blur");
-    effects.push_back("7) Edge Detection");
 
     double y_pos = 4.55;
     for (int i = 0; i < effects.size(); i++) {
@@ -113,9 +120,6 @@ void Text_Display::render_effects_list(int effect_id) {
 
 void Text_Display::render_key_status(bool key_collected) {
   if (key_collected) {
-    //Heads-Up Display Rectangle
-    set_basic_rectangle(&rect_key_status,glm::vec3(3.2,4.65,0.0),1.8,0.4);
-
     data.fill_program->use();
     data.fill_program->setMat4("model",glm::mat4(1.0f));
     data.fill_program->setMat4("view",glm::mat4(1.0));

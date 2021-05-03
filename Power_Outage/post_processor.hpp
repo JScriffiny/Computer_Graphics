@@ -11,6 +11,7 @@ class Post_Processor {
     bool nightvision_on = false;
   public:
     Post_Processor(int post_process_selection,bool post_process_flag,bool nightvision_on);
+    void initialize();
     int get_selection();
     bool get_nightvision_status();
     void render_effect(Shader * shader, unsigned int texture);
