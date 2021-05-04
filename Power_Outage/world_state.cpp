@@ -464,35 +464,31 @@ void World::render_stencils(Shader* fill_program, Shader* import_program) {
 
 void World::check_portal_teleport() {
   glm::vec3 cur_pos = camera->get_position();
-  int x = cur_pos.x;
-  int z = cur_pos.z;
+  double x = cur_pos.x*1.0;
+  double z = cur_pos.z*1.0;
   double ref_x1 = 9.5;
   double ref_x2 = 10.5;
   double ref_z1 = 7.2;
   double ref_z2 = 7.5;
-  if (x > ref_x1 && x < ref_x2 && z > ref_z1 && z < ref_z2) { //portal1
-    std::cout << "Portal 1 Teleport" << std::endl;
-    camera->set_position(room1_pos);
-  }
-  if ((x+10.0) > ref_x1 && (x+10.0) < ref_x2 && z > ref_z1 && z < ref_z2) { //portal2
-    camera->set_position(room2_pos);
-  }
-  if (x > ref_x1 && x < ref_x2 && z < -ref_z2 && z > -ref_z2) { //portal3
-    camera->set_position(room3_pos);
-  }
-  if ((x+10.0) > ref_x1 && (x+10.0) < ref_x2 && z < -ref_z2 && z > -ref_z2) { //portal4
-    camera->set_position(room4_pos);
-  }
+
+  //Portal 1 (Red)
+  if (x > ref_x1 && x < ref_x2 && z > ref_z1 && z < ref_z2) camera->set_position(room1_pos);
+  //Portal 2 (Blue)
+  if (x > (ref_x1+10.0) && x < (ref_x2+10.0) && z > ref_z1 && z < ref_z2) camera->set_position(room2_pos);
+  //Portal 3 (Green)
+  if (x > ref_x1 && x < ref_x2 && (z*-1.0) > ref_z1 && (z*-1.0) < ref_z2) camera->set_position(room3_pos);
+  //Portal 4 (Pink)
+  if (x > (ref_x1+10.0) && x < (ref_x2+10.0) && (z*-1.0) > ref_z1 && (z*-1.0) < ref_z2) camera->set_position(room4_pos);
 }
 
 void World::check_collision(glm::vec3 previous_pos) {
   glm::vec3 cur_pos = camera->get_position();
-  int x = cur_pos.x;
-  int z = cur_pos.z;
+  double x = cur_pos.x*1.0;
+  double z = cur_pos.z*1.0;
   double ref1 = 4.9;
   double ref2 = 5.1;
   if (x > ref1 && x < ref2 && z > -ref2 && z < ref2) { //front wall
-    if (z < 2.5f || (z >= 2.5f && !door->get_door_status())) camera->set_position(previous_pos);
+    if (z < 2.5 || (z >= 2.5 && !door->get_door_status())) camera->set_position(previous_pos);
   }
   if (x > (ref1-5.0) && x < (ref2-5.0) && z > -2.5 && z < 2.5) { //middle-z wall
     camera->set_position(previous_pos);
