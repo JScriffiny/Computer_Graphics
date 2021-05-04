@@ -41,7 +41,7 @@ Material silver{glm::vec3(0.19225,0.19225,0.19225),
                  0.4*128};
 
 //Create camera object
-Camera camera(glm::vec3(10.0f,-3.0f,-3.0f),glm::vec3(0.0f,1.0f,0.0f),115.0f, 0.0f);
+Camera camera(glm::vec3(20.0f,-3.0f,0.0f),glm::vec3(0.0f,1.0f,0.0f),180.0f, 0.0f);
 
 //Function Prototypes
 void mouse_callback (GLFWwindow* win, double xpos, double ypos);
@@ -67,7 +67,7 @@ int main() {
   //Import objects
   ImportOBJ new_importer;
 
-  /** Office Scene setup **/
+  //Office Scene setup
   //Office Floor
   Shape_Struct new_officeFloor = new_importer.loadFiles("models/floor");
   Shape officeFloor(new_officeFloor);
@@ -80,6 +80,16 @@ int main() {
   Shape_Struct new_furniture = new_importer.loadFiles("models/furniture");
   Shape furniture(new_furniture);
   unsigned int furniture_texture = new_importer.getTexture();
+
+  //Portals setup
+  Shape_Struct new_portal1 = new_importer.loadFiles("models/portal1");
+  Shape portal1(new_portal1);
+  Shape_Struct new_portal2 = new_importer.loadFiles("models/portal2");
+  Shape portal2(new_portal2);
+  Shape_Struct new_portal3 = new_importer.loadFiles("models/portal3");
+  Shape portal3(new_portal3);
+  Shape_Struct new_portal4 = new_importer.loadFiles("models/portal4");
+  Shape portal4(new_portal4);
 
   //Keyhole
   Shape_Struct new_keyhole = new_importer.loadFiles("models/keyhole");
@@ -151,6 +161,15 @@ int main() {
   //Add lampost to map
   draw_map["lampost"].shape = &lampost;
   draw_map["lampost"].shader = &import_program;
+  //Add portals to map
+  draw_map["portal1"].shape = &portal1;
+  draw_map["portal1"].shader = &import_program;
+  draw_map["portal2"].shape = &portal2;
+  draw_map["portal2"].shader = &import_program;
+  draw_map["portal3"].shape = &portal3;
+  draw_map["portal3"].shader = &import_program;
+  draw_map["portal4"].shape = &portal4;
+  draw_map["portal4"].shader = &import_program;
   //Add cubes to map
   draw_map["cube1"].shape = &cube1;
   draw_map["cube1"].shader = &fill_program;

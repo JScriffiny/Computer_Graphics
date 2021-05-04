@@ -66,7 +66,10 @@ void World::process_input (GLFWwindow *win) {
       camera->process_keyboard(RIGHT,deltaTime); 
   }
   //If player runs into wall, prevent them from going through it
-  if (!bird_cam_on) check_collision(previous_pos);
+  if (!bird_cam_on) {
+    check_collision(previous_pos);
+    check_portal_teleport();
+  }
 
   //Toggle flashlight's red lens
   if (glfwGetKey(win,GLFW_KEY_R)==GLFW_PRESS && !spot_light_redLens_flag) {
@@ -132,7 +135,7 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
   }
   else {
-    glViewport(0,0,960,720);
+    glViewport(0,0,width,height);
     glBindFramebuffer(GL_FRAMEBUFFER,post_buffer);
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
     glActiveTexture(GL_TEXTURE1);
@@ -291,6 +294,55 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
   lampost_shader->setBool("use_texture",false);
   lampost->draw(lampost_shader->ID);
   lampost_shader->setBool("use_texture",false);
+
+  //Draw Portals
+  Shader* portal_shader = objects["portal1"].shader; //same shader for each portal
+  //if (optional_shader != NULL) portal_shader = optional_shader;
+  portal_shader->use();
+  //Portal 1
+  Shape* portal1 = objects["portal1"].shape;
+  glm::mat4 portal1_transform(1.0f);
+  portal1_transform = glm::translate(portal1_transform,glm::vec3(10.0f,-3.99f,7.5f));
+  portal1_transform = glm::rotate(portal1_transform,glm::radians(0.0f),glm::vec3(0.0,1.0,0.0));
+  portal1_transform = glm::scale(portal1_transform,glm::vec3(0.6f,0.6f,0.6f));
+  glActiveTexture(GL_TEXTURE0);
+  portal_shader->setMat4("model",portal1_transform);
+  portal_shader->setBool("use_texture",false);
+  portal1->draw(portal_shader->ID);
+  portal_shader->setBool("use_texture",false);
+  //Portal 2
+  Shape* portal2 = objects["portal2"].shape;
+  glm::mat4 portal2_transform(1.0f);
+  portal2_transform = glm::translate(portal2_transform,glm::vec3(20.0f,-3.99f,7.5f));
+  portal2_transform = glm::rotate(portal2_transform,glm::radians(0.0f),glm::vec3(0.0,1.0,0.0));
+  portal2_transform = glm::scale(portal2_transform,glm::vec3(0.6f,0.6f,0.6f));
+  glActiveTexture(GL_TEXTURE0);
+  portal_shader->setMat4("model",portal2_transform);
+  portal_shader->setBool("use_texture",false);
+  portal2->draw(portal_shader->ID);
+  portal_shader->setBool("use_texture",false);
+  //Portal 3
+  Shape* portal3 = objects["portal3"].shape;
+  glm::mat4 portal3_transform(1.0f);
+  portal3_transform = glm::translate(portal3_transform,glm::vec3(10.0f,-3.99f,-7.5f));
+  portal3_transform = glm::rotate(portal3_transform,glm::radians(0.0f),glm::vec3(0.0,1.0,0.0));
+  portal3_transform = glm::scale(portal3_transform,glm::vec3(0.6f,0.6f,0.6f));
+  glActiveTexture(GL_TEXTURE0);
+  portal_shader->setMat4("model",portal3_transform);
+  portal_shader->setBool("use_texture",false);
+  portal3->draw(portal_shader->ID);
+  portal_shader->setBool("use_texture",false);
+  //Portal 4
+  Shape* portal4 = objects["portal4"].shape;
+  glm::mat4 portal4_transform(1.0f);
+  portal4_transform = glm::translate(portal4_transform,glm::vec3(20.0f,-3.99f,-7.5f));
+  portal4_transform = glm::rotate(portal4_transform,glm::radians(0.0f),glm::vec3(0.0,1.0,0.0));
+  portal4_transform = glm::scale(portal4_transform,glm::vec3(0.6f,0.6f,0.6f));
+  glActiveTexture(GL_TEXTURE0);
+  portal_shader->setMat4("model",portal4_transform);
+  portal_shader->setBool("use_texture",false);
+  portal4->draw(portal_shader->ID);
+  portal_shader->setBool("use_texture",false);
   
   //Draw cube1 (silver)
   Shape* cube1 = objects["cube1"].shape;
@@ -410,16 +462,39 @@ void World::render_stencils(Shader* fill_program, Shader* import_program) {
   }
 }
 
+void World::check_portal_teleport() {
+  glm::vec3 cur_pos = camera->get_position();
+  int x = cur_pos.x;
+  int z = cur_pos.z;
+  double ref_x1 = 9.5;
+  double ref_x2 = 10.5;
+  double ref_z1 = 7.2;
+  double ref_z2 = 7.5;
+  if (x > ref_x1 && x < ref_x2 && z > ref_z1 && z < ref_z2) { //portal1
+    std::cout << "Portal 1 Teleport" << std::endl;
+    camera->set_position(room1_pos);
+  }
+  if ((x+10.0) > ref_x1 && (x+10.0) < ref_x2 && z > ref_z1 && z < ref_z2) { //portal2
+    camera->set_position(room2_pos);
+  }
+  if (x > ref_x1 && x < ref_x2 && z < -ref_z2 && z > -ref_z2) { //portal3
+    camera->set_position(room3_pos);
+  }
+  if ((x+10.0) > ref_x1 && (x+10.0) < ref_x2 && z < -ref_z2 && z > -ref_z2) { //portal4
+    camera->set_position(room4_pos);
+  }
+}
+
 void World::check_collision(glm::vec3 previous_pos) {
   glm::vec3 cur_pos = camera->get_position();
   int x = cur_pos.x;
   int z = cur_pos.z;
-  float ref1 = 4.9f;
-  float ref2 = 5.1f;
+  double ref1 = 4.9;
+  double ref2 = 5.1;
   if (x > ref1 && x < ref2 && z > -ref2 && z < ref2) { //front wall
     if (z < 2.5f || (z >= 2.5f && !door->get_door_status())) camera->set_position(previous_pos);
   }
-  if (x > (ref1-5.0f) && x < (ref2-5.0f) && z > -2.5f && z < 2.5f) { //middle-z wall
+  if (x > (ref1-5.0) && x < (ref2-5.0) && z > -2.5 && z < 2.5) { //middle-z wall
     camera->set_position(previous_pos);
   }
   if (x < -ref1 && x > -ref2 && z > -ref2 && z < ref2) { //back wall
@@ -428,7 +503,7 @@ void World::check_collision(glm::vec3 previous_pos) {
   if (x > -ref2 && x < ref2 && z > ref1 && z < ref2) { //left wall
     camera->set_position(previous_pos);
   }
-  if (x > -2.5f && x < ref2 && z > (ref1-5.0f) && z < (ref2-5.0f)) { //middle-x wall
+  if (x > -2.5 && x < ref2 && z > (ref1-5.0) && z < (ref2-5.0)) { //middle-x wall
     camera->set_position(previous_pos);
   }
   if (x > -ref2 && x < ref2 && z < -ref1 && z > -ref2) { //right wall

@@ -30,8 +30,6 @@ bool Post_Processor::get_nightvision_status() {
 }
 
 void Post_Processor::render_effect(Shader * shader, unsigned int texture) {
-    //set_texture_rectangle(&post_rect,glm::vec3(-1.0f,-1.0f,0.0f),2.0f,2.0f,false,false,1.0f);
-    //Unbind framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f); 
     shader->use();

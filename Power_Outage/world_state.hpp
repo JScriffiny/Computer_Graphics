@@ -26,6 +26,7 @@ class World {
     void render_stencils(Shader* fill_program, Shader* import_program);
     glm::mat4 getLightPOV();
     void check_collision(glm::vec3 previous_pos);
+    void check_portal_teleport();
     
     glm::vec4 clear_color = glm::vec4(0.0f,0.0f,0.0f,1.0f);
     bool rgba_array[4] = {false,false,false,false};
@@ -51,6 +52,12 @@ class World {
     bool dir_light_on = false;
     glm::vec3 dir_light_direction = glm::vec3(1.0,-1.0,1.0);
     glm::vec3 dir_light_color = glm::vec3(0.4f,0.4f,0.4f);
+
+    //Room Positions
+    glm::vec3 room1_pos = glm::vec3(10.0f,-3.0f,5.0f);
+    glm::vec3 room2_pos = glm::vec3(20.0f,-3.0f,5.0f);
+    glm::vec3 room3_pos = glm::vec3(10.0f,-3.0f,-5.0f);
+    glm::vec3 room4_pos = glm::vec3(20.0f,-3.0f,-5.0f);
 
     //Singular key press booleans
     bool my_toggle = true;
