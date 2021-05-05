@@ -134,7 +134,7 @@ void Text_Display::render_key_status(bool key_collected) {
     //Display String
     std::string disp_string = "Key Collected!";
 
-    data.font->draw_text(disp_string,glm::vec2(3.2,4.65),*data.font_program);
+    data.font->draw_text(disp_string,glm::vec2(3.25,4.65),*data.font_program);
     data.font_program->use();
     data.font_program->setFloat("alpha",alpha_value);
   }

@@ -53,11 +53,11 @@ class World {
     glm::vec3 dir_light_direction = glm::vec3(1.0,-1.0,1.0);
     glm::vec3 dir_light_color = glm::vec3(0.4f,0.4f,0.4f);
 
-    //Room Positions
-    glm::vec3 room1_pos = glm::vec3(-50.0f,-3.0f,75.0f);
-    glm::vec3 room2_pos = glm::vec3(80.0f,-3.0f,75.0f);
-    glm::vec3 room3_pos = glm::vec3(-50.0f,-3.0f,-75.0f);
-    glm::vec3 room4_pos = glm::vec3(85.0f,-3.0f,-70.0f);
+    //Teleport Locations
+    glm::vec3 teleport1_pos = glm::vec3(-50.0f,-3.0f,75.0f);
+    glm::vec3 teleport2_pos = glm::vec3(80.0f,-3.0f,75.0f);
+    glm::vec3 teleport3_pos = glm::vec3(-50.0f,-3.0f,-75.0f);
+    glm::vec3 teleport4_pos = glm::vec3(85.0f,-3.0f,-70.0f);
 
     //Singular key press booleans
     bool my_toggle = true;

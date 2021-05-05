@@ -24,6 +24,27 @@ void World::process_input (GLFWwindow *win) {
     glfwSetWindowShouldClose(win,true);
   }
 
+  //First-Person Movement (WASD)
+  glm::vec3 previous_pos = camera->get_position();
+  if (glfwGetKey(win,GLFW_KEY_W)==GLFW_PRESS) {
+      camera->process_keyboard(FORWARD,deltaTime); 
+  }
+  if (glfwGetKey(win,GLFW_KEY_S)==GLFW_PRESS) {
+      camera->process_keyboard(BACKWARD,deltaTime); 
+  }
+  if (glfwGetKey(win,GLFW_KEY_A)==GLFW_PRESS) {
+      camera->process_keyboard(LEFT,deltaTime); 
+  }
+  if (glfwGetKey(win,GLFW_KEY_D)==GLFW_PRESS) {
+      camera->process_keyboard(RIGHT,deltaTime); 
+  }
+  //If player runs into wall, prevent them from going through it
+  if (!bird_cam_on) {
+    check_collision(previous_pos);
+  }
+  //Update player position if player walks through portal
+  check_portal_teleport();
+
   //Toggle camera mode with "Tab" key (First Person <-> Bird's eye view)
   if (glfwGetKey(win,GLFW_KEY_TAB)==GLFW_PRESS && !cameraView_key_pressed) {
       cameraView_key_pressed = true;
@@ -43,32 +64,12 @@ void World::process_input (GLFWwindow *win) {
   }
 
   //Press backspace to teleport back to spawn
-  if (glfwGetKey(win,GLFW_KEY_BACKSPACE) == GLFW_PRESS && !bird_cam_on && !spawn_pressed) {
+  if (glfwGetKey(win,GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS && !bird_cam_on && !spawn_pressed) {
     spawn_pressed = true;
     camera->set_position(glm::vec3(20.0f,-3.0f,0.0f)); //spawn point
   }
-  if (glfwGetKey(win,GLFW_KEY_BACKSPACE)==GLFW_RELEASE) {
+  if (glfwGetKey(win,GLFW_KEY_LEFT_SHIFT)==GLFW_RELEASE) {
     spawn_pressed = false;
-  }
-
-  //First-Person Movement (WASD)
-  glm::vec3 previous_pos = camera->get_position();
-  if (glfwGetKey(win,GLFW_KEY_W)==GLFW_PRESS) {
-      camera->process_keyboard(FORWARD,deltaTime); 
-  }
-  if (glfwGetKey(win,GLFW_KEY_S)==GLFW_PRESS) {
-      camera->process_keyboard(BACKWARD,deltaTime); 
-  }
-  if (glfwGetKey(win,GLFW_KEY_A)==GLFW_PRESS) {
-      camera->process_keyboard(LEFT,deltaTime); 
-  }
-  if (glfwGetKey(win,GLFW_KEY_D)==GLFW_PRESS) {
-      camera->process_keyboard(RIGHT,deltaTime); 
-  }
-  //If player runs into wall, prevent them from going through it
-  if (!bird_cam_on) {
-    check_collision(previous_pos);
-    check_portal_teleport();
   }
 
   //Toggle flashlight's red lens
@@ -100,9 +101,8 @@ void World::process_input (GLFWwindow *win) {
     spot_light_diffuse = glm::vec3(0.8f,0.8f,0.8f);
   }
 
-  //Toggle Anything
+  //Toggle Anything (Development Purposes)
   if (glfwGetKey(win,GLFW_KEY_P)==GLFW_PRESS && my_toggle) {
-    dir_light_on = !dir_light_on;
     //std::cout << "Print something" << std::endl;
     my_toggle = false;
   }
@@ -211,7 +211,6 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
   //Draw worldFloor
   Shape* worldFloor = objects["worldFloor"].shape;
   Shader* worldFloor_shader = objects["worldFloor"].shader;
-  //if (optional_shader != NULL) worldFloor_shader = optional_shader;
   worldFloor_shader->use();
   worldFloor_shader->setMat4("transform",glm::mat4(1.0f));
   worldFloor_shader->setMat4("lightSpaceMatrix",getLightPOV());
@@ -281,24 +280,23 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
   keyhole->draw(keyhole_shader->ID);
   keyhole_shader->setBool("use_texture",false);
 
-  //Draw lampost
-  Shape* lampost = objects["lampost"].shape;
-  Shader* lampost_shader = objects["lampost"].shader;
-  if (optional_shader != NULL) lampost_shader = optional_shader;
-  lampost_shader->use();
-  glm::mat4 lampost_transform(1.0f);
-  lampost_transform = glm::translate(lampost_transform,glm::vec3(15.0f,-3.99f,0.0f));
-  lampost_transform = glm::rotate(lampost_transform,glm::radians(-90.0f),glm::vec3(0.0,1.0,0.0));
-  lampost_transform = glm::scale(lampost_transform,glm::vec3(0.2f,0.2f,0.2f));
+  //Draw lamppost
+  Shape* lamppost = objects["lamppost"].shape;
+  Shader* lamppost_shader = objects["lamppost"].shader;
+  if (optional_shader != NULL) lamppost_shader = optional_shader;
+  lamppost_shader->use();
+  glm::mat4 lamppost_transform(1.0f);
+  lamppost_transform = glm::translate(lamppost_transform,glm::vec3(15.0f,-3.99f,0.0f));
+  lamppost_transform = glm::rotate(lamppost_transform,glm::radians(-90.0f),glm::vec3(0.0,1.0,0.0));
+  lamppost_transform = glm::scale(lamppost_transform,glm::vec3(0.2f,0.2f,0.2f));
   glActiveTexture(GL_TEXTURE0);
-  lampost_shader->setMat4("model",lampost_transform);
-  lampost_shader->setBool("use_texture",false);
-  lampost->draw(lampost_shader->ID);
-  lampost_shader->setBool("use_texture",false);
+  lamppost_shader->setMat4("model",lamppost_transform);
+  lamppost_shader->setBool("use_texture",false);
+  lamppost->draw(lamppost_shader->ID);
+  lamppost_shader->setBool("use_texture",false);
 
   //Draw Portals
   Shader* portal_shader = objects["portal1"].shader; //same shader for each portal
-  //if (optional_shader != NULL) portal_shader = optional_shader;
   portal_shader->use();
   //Portal 1
   Shape* portal1 = objects["portal1"].shape;
@@ -347,7 +345,6 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
 
   //Draw Buildings
   Shader* building_shader = objects["building1"].shader; //same shader for each building
-  //if (optional_shader != NULL) building_shader = optional_shader;
   building_shader->use();
   //Building 1
   Shape* building1 = objects["building1"].shape;
@@ -423,13 +420,11 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
   //Stenciled Objects Section
   glStencilFunc(GL_ALWAYS,1,0xFF);
   glStencilMask(0xFF);
-  //Draw key
+
   office_key->draw(optional_shader);
-  //Draw door
   door->draw(NULL);
-  //Draw pressure plate
   pressure_plate->draw(NULL);
-  //Render all stencils
+
   render_stencils(objects["stencil_fill"].shader,objects["stencil_import"].shader);
 
   //Render skybox
@@ -446,7 +441,7 @@ glm::mat4 World::getLightPOV() {
   glm::vec3 light_pos = camera->get_position();
   glm::vec3 pos = glm::vec3(light_pos.x,light_pos.y+3.2f,light_pos.z);
   glm::vec3 front = camera->get_front();
-  glm::mat4 lightView = glm::lookAt(pos,front*4.0f,glm::vec3(0.0f,1.0f,0.0f));
+  glm::mat4 lightView = glm::lookAt(pos,front*40.0f,glm::vec3(0.0f,1.0f,0.0f));
   glm::mat4 lightSpaceMatrix = lightProjection * lightView; 
   return lightSpaceMatrix;
 }
@@ -457,7 +452,7 @@ void World::render_stencils(Shader* fill_program, Shader* import_program) {
     glStencilFunc(GL_NOTEQUAL,1,0xFF);
     glStencilMask(0x00);
     glDisable(GL_DEPTH_TEST);
-    door->set_scale(glm::vec3(0.52,0.52,0.52));
+    door->set_scale(glm::vec3(0.655,0.655,0.655));
     fill_program->use();
     fill_program->setBool("use_set_color",true);
     //Door outline is red until key is inserted
@@ -466,7 +461,7 @@ void World::render_stencils(Shader* fill_program, Shader* import_program) {
     door->set_shader(fill_program);
     door->draw(NULL);
     door->set_shader(import_program);
-    door->set_scale(glm::vec3(0.5,0.5,0.5));
+    door->set_scale(glm::vec3(0.638,0.638,0.638));
     fill_program->setBool("use_set_color",false);
     glStencilMask(0xFF);
     glStencilFunc(GL_ALWAYS,1,0xFF);
@@ -522,21 +517,29 @@ void World::check_portal_teleport() {
   double ref_z2 = 7.5;
 
   //Portal 1 (Red)
-  if (x > ref_x1 && x < ref_x2 && z > ref_z1 && z < ref_z2) camera->set_position(room1_pos);
+  if (x > ref_x1 && x < ref_x2 && z > ref_z1 && z < ref_z2) {
+    camera->set_position(teleport1_pos);
+  }
   //Portal 2 (Blue)
-  if (x > (ref_x1+10.0) && x < (ref_x2+10.0) && z > ref_z1 && z < ref_z2) camera->set_position(room2_pos);
+  if (x > (ref_x1+10.0) && x < (ref_x2+10.0) && z > ref_z1 && z < ref_z2) {
+    camera->set_position(teleport2_pos);
+  }
   //Portal 3 (Green)
-  if (x > ref_x1 && x < ref_x2 && (z*-1.0) > ref_z1 && (z*-1.0) < ref_z2) camera->set_position(room3_pos);
+  if (x > ref_x1 && x < ref_x2 && (z*-1.0) > ref_z1 && (z*-1.0) < ref_z2) {
+    camera->set_position(teleport3_pos);
+  }
   //Portal 4 (Pink)
-  if (x > (ref_x1+10.0) && x < (ref_x2+10.0) && (z*-1.0) > ref_z1 && (z*-1.0) < ref_z2) camera->set_position(room4_pos);
+  if (x > (ref_x1+10.0) && x < (ref_x2+10.0) && (z*-1.0) > ref_z1 && (z*-1.0) < ref_z2) {
+    camera->set_position(teleport4_pos);
+  }
 }
 
 void World::check_collision(glm::vec3 previous_pos) {
   glm::vec3 cur_pos = camera->get_position();
   double x = cur_pos.x*1.0;
   double z = cur_pos.z*1.0;
-  double ref1 = 4.9;
-  double ref2 = 5.1;
+  double ref1 = 4.86;
+  double ref2 = 5.14;
   if (x > ref1 && x < ref2 && z > -ref2 && z < ref2) { //front wall
     if (z < 2.5 || (z >= 2.5 && !door->get_door_status())) camera->set_position(previous_pos);
   }

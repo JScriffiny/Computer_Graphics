@@ -66,7 +66,7 @@ void MovingDoor::process_input(GLFWwindow *win, glm::vec3 camera_pos,bool key_in
             this->is_open = !this->is_open;
             if (this->is_open) {
                 this->rotation = 90.0f;
-                this->position = glm::vec3(3.7,-3.99,4.9);
+                this->position = glm::vec3(3.42,-3.99,4.9);
             }
             else {
                 this->rotation = 0.0f;

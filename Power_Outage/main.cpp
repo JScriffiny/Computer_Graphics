@@ -69,53 +69,52 @@ int main() {
 
   //Office Scene setup
   //Office Floor
-  Shape_Struct new_officeFloor = new_importer.loadFiles("models/floor");
+  Shape_Struct new_officeFloor = new_importer.loadFiles("models/office/floor");
   Shape officeFloor(new_officeFloor);
   unsigned int officeFloor_texture = new_importer.getTexture();
   //Office Walls
-  Shape_Struct new_walls = new_importer.loadFiles("models/walls");
+  Shape_Struct new_walls = new_importer.loadFiles("models/office/walls");
   Shape walls(new_walls);
   unsigned int walls_texture = new_importer.getTexture();
   //Office Furniture
-  Shape_Struct new_furniture = new_importer.loadFiles("models/furniture");
+  Shape_Struct new_furniture = new_importer.loadFiles("models/office/furniture");
   Shape furniture(new_furniture);
   unsigned int furniture_texture = new_importer.getTexture();
-
-  //Portals setup
-  Shape_Struct new_portal1 = new_importer.loadFiles("models/portal1");
-  Shape portal1(new_portal1);
-  Shape_Struct new_portal2 = new_importer.loadFiles("models/portal2");
-  Shape portal2(new_portal2);
-  Shape_Struct new_portal3 = new_importer.loadFiles("models/portal3");
-  Shape portal3(new_portal3);
-  Shape_Struct new_portal4 = new_importer.loadFiles("models/portal4");
-  Shape portal4(new_portal4);
-
-  //Buildings setup
-  Shape_Struct new_building1 = new_importer.loadFiles("models/building1");
-  Shape building1(new_building1);
-  Shape_Struct new_building2 = new_importer.loadFiles("models/building2");
-  Shape building2(new_building2);
-  Shape_Struct new_building3 = new_importer.loadFiles("models/building3");
-  Shape building3(new_building3);
-  Shape_Struct new_building4 = new_importer.loadFiles("models/building4");
-  Shape building4(new_building4);
-
-  //Keyhole
-  Shape_Struct new_keyhole = new_importer.loadFiles("models/keyhole");
-  Shape keyhole(new_keyhole);
-  unsigned int keyhole_texture = new_importer.getTexture();
-
-  //Lampost
-  Shape_Struct new_lampost = new_importer.loadFiles("models/lampost");
-  Shape lampost(new_lampost);
-
   //Material Cubes
   Shape cube1,cube2;
   set_basic_cube(&cube1);    
   cube1.set_material(silver);
   set_basic_cube(&cube2);
   cube2.set_material(pearl);
+
+  //Portals setup
+  Shape_Struct new_portal1 = new_importer.loadFiles("models/portals/portal1");
+  Shape portal1(new_portal1); //Red
+  Shape_Struct new_portal2 = new_importer.loadFiles("models/portals/portal2");
+  Shape portal2(new_portal2); //Blue
+  Shape_Struct new_portal3 = new_importer.loadFiles("models/portals/portal3");
+  Shape portal3(new_portal3); //Green
+  Shape_Struct new_portal4 = new_importer.loadFiles("models/portals/portal4");
+  Shape portal4(new_portal4); //Pink
+
+  //Buildings setup
+  Shape_Struct new_building1 = new_importer.loadFiles("models/buildings/building1");
+  Shape building1(new_building1); //Red
+  Shape_Struct new_building2 = new_importer.loadFiles("models/buildings/building2");
+  Shape building2(new_building2); //Blue
+  Shape_Struct new_building3 = new_importer.loadFiles("models/buildings/building3");
+  Shape building3(new_building3); //Green
+  Shape_Struct new_building4 = new_importer.loadFiles("models/buildings/building4");
+  Shape building4(new_building4); //Pink
+
+  //Keyhole
+  Shape_Struct new_keyhole = new_importer.loadFiles("models/keyhole");
+  Shape keyhole(new_keyhole);
+  unsigned int keyhole_texture = new_importer.getTexture();
+
+  //Lamppost
+  Shape_Struct new_lamppost = new_importer.loadFiles("models/lamppost");
+  Shape lamppost(new_lamppost);
 
   //Pressure Plate
   MovingPlate pressure_plate(new_importer.loadFiles("models/pressurePlate"),
@@ -124,12 +123,12 @@ int main() {
   
   //Door
   MovingDoor door(new_importer.loadFiles("models/door"),
-                  glm::vec3(0.5,0.5,0.5),glm::vec3(5.0,-3.99,3.75),0.0f);
+                  glm::vec3(0.638,0.638,0.638),glm::vec3(5.0,-3.99,3.41),0.0f);
   door.set_texture(new_importer.getTexture());
 
   //Key
   MovingKey office_key(new_importer.loadFiles("models/key"),
-                  glm::vec3(0.25,0.25,0.25),glm::vec3(-65.0,-3.99,-47.0),0.0f);
+                  glm::vec3(0.25,0.25,0.25),glm::vec3(-67.0,-3.99,-47.0),0.0f);
   office_key.set_texture(new_importer.getTexture());
   
   //Brick floor
@@ -169,8 +168,8 @@ int main() {
   draw_map["keyhole"].shader = &import_program;
   draw_map["keyhole"].texture = keyhole_texture;
   //Add lampost to map
-  draw_map["lampost"].shape = &lampost;
-  draw_map["lampost"].shader = &import_program;
+  draw_map["lamppost"].shape = &lamppost;
+  draw_map["lamppost"].shader = &import_program;
   //Add portals to map
   draw_map["portal1"].shape = &portal1;
   draw_map["portal1"].shader = &import_program;

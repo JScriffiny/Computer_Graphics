@@ -70,13 +70,13 @@ void MovingKey::process_input(GLFWwindow *win, glm::vec3 camera_pos) {
         if (dist_to_key < key_range) within_range1 = true;
 
         //Press 'K' to collect key
-        if (glfwGetKey(win,GLFW_KEY_K)==GLFW_PRESS && within_range1 && collect_flag) {
+        if (glfwGetKey(win,GLFW_KEY_C)==GLFW_PRESS && within_range1 && collect_flag) {
             first_collect = true;
             collect_flag = false;
             collected = true;
             inserted = false;
         }
-        if (glfwGetKey(win,GLFW_KEY_K)==GLFW_RELEASE) {
+        if (glfwGetKey(win,GLFW_KEY_C)==GLFW_RELEASE) {
             collect_flag = true;
         }
     }
@@ -86,12 +86,12 @@ void MovingKey::process_input(GLFWwindow *win, glm::vec3 camera_pos) {
         if (dist_to_keyhole < keyhole_range) within_range2 = true;
 
         //Press 'K' to insert key
-        if (glfwGetKey(win,GLFW_KEY_K)==GLFW_PRESS && within_range2 && insert_flag) {
+        if (glfwGetKey(win,GLFW_KEY_C)==GLFW_PRESS && within_range2 && insert_flag) {
             insert_flag = false;
             inserted = true;
             collected = false;
         }
-        if (glfwGetKey(win,GLFW_KEY_K)==GLFW_RELEASE) {
+        if (glfwGetKey(win,GLFW_KEY_C)==GLFW_RELEASE) {
             insert_flag = true;
         }
     }
