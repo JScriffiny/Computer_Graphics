@@ -45,7 +45,7 @@ void World::process_input (GLFWwindow *win) {
   //Press backspace to teleport back to spawn
   if (glfwGetKey(win,GLFW_KEY_BACKSPACE) == GLFW_PRESS && !bird_cam_on && !spawn_pressed) {
     spawn_pressed = true;
-    camera->set_position(glm::vec3(10.0f,-3.0f,0.0f));
+    camera->set_position(glm::vec3(20.0f,-3.0f,0.0f)); //spawn point
   }
   if (glfwGetKey(win,GLFW_KEY_BACKSPACE)==GLFW_RELEASE) {
     spawn_pressed = false;
@@ -102,7 +102,8 @@ void World::process_input (GLFWwindow *win) {
 
   //Toggle Anything
   if (glfwGetKey(win,GLFW_KEY_P)==GLFW_PRESS && my_toggle) {
-    std::cout << "Print something" << std::endl;
+    dir_light_on = !dir_light_on;
+    //std::cout << "Print something" << std::endl;
     my_toggle = false;
   }
   if (glfwGetKey(win,GLFW_KEY_P)==GLFW_RELEASE) {
@@ -216,7 +217,7 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
   worldFloor_shader->setMat4("lightSpaceMatrix",getLightPOV());
   glm::mat4 worldFloor_model(1.0f);
   worldFloor_model = glm::translate(worldFloor_model,glm::vec3(0.0,-4.0,0.0));
-  worldFloor_model = glm::scale(worldFloor_model,glm::vec3(100.0f,100.0f,100.0f));
+  worldFloor_model = glm::scale(worldFloor_model,glm::vec3(150.0f,150.0f,150.0f));
   worldFloor_model = glm::rotate(worldFloor_model,glm::radians(-90.0f),glm::vec3(1.0,0.0,0.0));
   worldFloor_shader->setMat4("model",worldFloor_model);
   glActiveTexture(GL_TEXTURE0);
@@ -288,7 +289,7 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
   glm::mat4 lampost_transform(1.0f);
   lampost_transform = glm::translate(lampost_transform,glm::vec3(15.0f,-3.99f,0.0f));
   lampost_transform = glm::rotate(lampost_transform,glm::radians(-90.0f),glm::vec3(0.0,1.0,0.0));
-  lampost_transform = glm::scale(lampost_transform,glm::vec3(0.3f,0.3f,0.3f));
+  lampost_transform = glm::scale(lampost_transform,glm::vec3(0.2f,0.2f,0.2f));
   glActiveTexture(GL_TEXTURE0);
   lampost_shader->setMat4("model",lampost_transform);
   lampost_shader->setBool("use_texture",false);
@@ -343,6 +344,55 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
   portal_shader->setBool("use_texture",false);
   portal4->draw(portal_shader->ID);
   portal_shader->setBool("use_texture",false);
+
+  //Draw Buildings
+  Shader* building_shader = objects["building1"].shader; //same shader for each building
+  //if (optional_shader != NULL) building_shader = optional_shader;
+  building_shader->use();
+  //Building 1
+  Shape* building1 = objects["building1"].shape;
+  glm::mat4 building1_transform(1.0f);
+  building1_transform = glm::translate(building1_transform,glm::vec3(-80.0f,-3.99f,20.0f));
+  building1_transform = glm::rotate(building1_transform,glm::radians(-90.0f),glm::vec3(0.0,1.0,0.0));
+  building1_transform = glm::scale(building1_transform,glm::vec3(0.6f,0.6f,0.6f));
+  glActiveTexture(GL_TEXTURE0);
+  building_shader->setMat4("model",building1_transform);
+  building_shader->setBool("use_texture",false);
+  building1->draw(building_shader->ID);
+  building_shader->setBool("use_texture",false);
+  //Building 2
+  Shape* building2 = objects["building2"].shape;
+  glm::mat4 building2_transform(1.0f);
+  building2_transform = glm::translate(building2_transform,glm::vec3(38.0f,-3.99f,20.0f));
+  building2_transform = glm::rotate(building2_transform,glm::radians(-90.0f),glm::vec3(0.0,1.0,0.0));
+  building2_transform = glm::scale(building2_transform,glm::vec3(0.6f,0.6f,0.6f));
+  glActiveTexture(GL_TEXTURE0);
+  building_shader->setMat4("model",building2_transform);
+  building_shader->setBool("use_texture",false);
+  building2->draw(building_shader->ID);
+  building_shader->setBool("use_texture",false);
+  //Building 3
+  Shape* building3 = objects["building3"].shape;
+  glm::mat4 building3_transform(1.0f);
+  building3_transform = glm::translate(building3_transform,glm::vec3(-7.5f,-3.99f,-20.0f));
+  building3_transform = glm::rotate(building3_transform,glm::radians(90.0f),glm::vec3(0.0,1.0,0.0));
+  building3_transform = glm::scale(building3_transform,glm::vec3(0.6f,0.6f,0.6f));
+  glActiveTexture(GL_TEXTURE0);
+  building_shader->setMat4("model",building3_transform);
+  building_shader->setBool("use_texture",false);
+  building3->draw(building_shader->ID);
+  building_shader->setBool("use_texture",false);
+  //Building 4
+  Shape* building4 = objects["building4"].shape;
+  glm::mat4 building4_transform(1.0f);
+  building4_transform = glm::translate(building4_transform,glm::vec3(110.0f,-3.99f,-15.0f));
+  building4_transform = glm::rotate(building4_transform,glm::radians(90.0f),glm::vec3(0.0,1.0,0.0));
+  building4_transform = glm::scale(building4_transform,glm::vec3(0.6f,0.6f,0.6f));
+  glActiveTexture(GL_TEXTURE0);
+  building_shader->setMat4("model",building4_transform);
+  building_shader->setBool("use_texture",false);
+  building4->draw(building_shader->ID);
+  building_shader->setBool("use_texture",false);
   
   //Draw cube1 (silver)
   Shape* cube1 = objects["cube1"].shape;
@@ -393,8 +443,8 @@ void World::render_scene (std::map<std::string, Draw_Data> objects,Shader *optio
 
 glm::mat4 World::getLightPOV() {
   glm::mat4 lightProjection = glm::ortho(-10.0f,10.0f,-10.0f,10.0f,1.0f,20.0f);
-  glm::vec3 light_pos = spot_light_position;
-  glm::vec3 pos = glm::vec3(light_pos.x,light_pos.y+2.0f,light_pos.z);
+  glm::vec3 light_pos = camera->get_position();
+  glm::vec3 pos = glm::vec3(light_pos.x,light_pos.y+3.2f,light_pos.z);
   glm::vec3 front = camera->get_front();
   glm::mat4 lightView = glm::lookAt(pos,front*4.0f,glm::vec3(0.0f,1.0f,0.0f));
   glm::mat4 lightSpaceMatrix = lightProjection * lightView; 

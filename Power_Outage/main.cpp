@@ -91,6 +91,16 @@ int main() {
   Shape_Struct new_portal4 = new_importer.loadFiles("models/portal4");
   Shape portal4(new_portal4);
 
+  //Buildings setup
+  Shape_Struct new_building1 = new_importer.loadFiles("models/building1");
+  Shape building1(new_building1);
+  Shape_Struct new_building2 = new_importer.loadFiles("models/building2");
+  Shape building2(new_building2);
+  Shape_Struct new_building3 = new_importer.loadFiles("models/building3");
+  Shape building3(new_building3);
+  Shape_Struct new_building4 = new_importer.loadFiles("models/building4");
+  Shape building4(new_building4);
+
   //Keyhole
   Shape_Struct new_keyhole = new_importer.loadFiles("models/keyhole");
   Shape keyhole(new_keyhole);
@@ -102,7 +112,7 @@ int main() {
 
   //Material Cubes
   Shape cube1,cube2;
-  set_basic_cube(&cube1);
+  set_basic_cube(&cube1);    
   cube1.set_material(silver);
   set_basic_cube(&cube2);
   cube2.set_material(pearl);
@@ -119,13 +129,13 @@ int main() {
 
   //Key
   MovingKey office_key(new_importer.loadFiles("models/key"),
-                  glm::vec3(0.25,0.25,0.25),glm::vec3(11.0,-3.99,1.0),0.0f);
+                  glm::vec3(0.25,0.25,0.25),glm::vec3(-65.0,-3.99,-47.0),0.0f);
   office_key.set_texture(new_importer.getTexture());
   
   //Brick floor
   Shape worldFloor;
   world.floor_texture = get_texture("images/bricks.jpg");
-  set_texture_rectangle(&worldFloor,glm::vec3(-1.0,-1.0,0.0f),2.0f,2.0f,false,false,50.0f);
+  set_texture_rectangle(&worldFloor,glm::vec3(-1.0,-1.0,0.0f),2.0f,2.0f,false,false,100.0f);
   
   //Initialize shader programs
   Shader fill_program("shaders/vertexShader.glsl","shaders/fragmentShader.glsl");
@@ -170,6 +180,15 @@ int main() {
   draw_map["portal3"].shader = &import_program;
   draw_map["portal4"].shape = &portal4;
   draw_map["portal4"].shader = &import_program;
+  //Add buildings to map
+  draw_map["building1"].shape = &building1;
+  draw_map["building1"].shader = &import_program;
+  draw_map["building2"].shape = &building2;
+  draw_map["building2"].shader = &import_program;
+  draw_map["building3"].shape = &building3;
+  draw_map["building3"].shader = &import_program;
+  draw_map["building4"].shape = &building4;
+  draw_map["building4"].shader = &import_program;
   //Add cubes to map
   draw_map["cube1"].shape = &cube1;
   draw_map["cube1"].shader = &fill_program;

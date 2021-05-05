@@ -54,10 +54,10 @@ class World {
     glm::vec3 dir_light_color = glm::vec3(0.4f,0.4f,0.4f);
 
     //Room Positions
-    glm::vec3 room1_pos = glm::vec3(10.0f,-3.0f,5.0f);
-    glm::vec3 room2_pos = glm::vec3(20.0f,-3.0f,5.0f);
-    glm::vec3 room3_pos = glm::vec3(10.0f,-3.0f,-5.0f);
-    glm::vec3 room4_pos = glm::vec3(20.0f,-3.0f,-5.0f);
+    glm::vec3 room1_pos = glm::vec3(-50.0f,-3.0f,75.0f);
+    glm::vec3 room2_pos = glm::vec3(80.0f,-3.0f,75.0f);
+    glm::vec3 room3_pos = glm::vec3(-50.0f,-3.0f,-75.0f);
+    glm::vec3 room4_pos = glm::vec3(85.0f,-3.0f,-70.0f);
 
     //Singular key press booleans
     bool my_toggle = true;
@@ -87,7 +87,7 @@ class World {
     //Camera
     bool cameraView_key_pressed = false;
     bool bird_cam_on = false;
-    glm::vec3 bird_cam_pos = glm::vec3(-0.5f,18.0f,1.0f);
+    glm::vec3 bird_cam_pos = glm::vec3(-0.5f,50.0f,1.0f);
     glm::vec3 saved_player_pos = glm::vec3(10.0f,-3.0f,-3.0f);
     Camera* camera;
 
